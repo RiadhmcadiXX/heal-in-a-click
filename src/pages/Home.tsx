@@ -5,26 +5,13 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { DoctorCard } from "@/components/DoctorCard";
 import { SpecialtyFilter } from "@/components/SpecialtyFilter";
-import { mockDoctors } from "@/lib/mockData";
-import { Doctor } from "@/types";
+import { useDoctors } from "@/hooks/useDoctors";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [specialty, setSpecialty] = useState("");
   
-  // Filter doctors based on search query and specialty
-  const filteredDoctors = mockDoctors.filter((doctor) => {
-    const matchesSearch =
-      doctor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doctor.specialty.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doctor.city.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesSpecialty = specialty
-      ? doctor.specialty === specialty
-      : true;
-    
-    return matchesSearch && matchesSpecialty;
-  });
+  const { data: doctors = [], isLoading, error } = useDoctors(searchQuery, specialty);
   
   const handleFilterChange = (selectedSpecialty: string) => {
     setSpecialty(selectedSpecialty);
@@ -48,8 +35,16 @@ export default function Home() {
         <SpecialtyFilter onFilterChange={handleFilterChange} />
         
         <div className="mt-6">
-          {filteredDoctors.length > 0 ? (
-            filteredDoctors.map((doctor) => (
+          {isLoading ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">Loading doctors...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-8">
+              <p className="text-red-500">Error loading doctors. Please try again.</p>
+            </div>
+          ) : doctors.length > 0 ? (
+            doctors.map((doctor) => (
               <DoctorCard key={doctor.id} doctor={doctor} />
             ))
           ) : (
