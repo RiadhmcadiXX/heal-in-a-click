@@ -52,6 +52,16 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				// Healthcare-specific colors
+				healthcare: {
+					primary: '#0EA5E9', // Bright blue
+					secondary: '#0284C7', // Darker blue
+					accent: '#38BDF8', // Light blue
+					background: '#F0F9FF', // Very light blue background
+					success: '#4ADE80', // Green for success indicators
+					warning: '#FBBF24', // Yellow for warning indicators
+					cardBg: '#FFFFFF', // White for card backgrounds
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
