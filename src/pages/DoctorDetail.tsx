@@ -5,15 +5,26 @@ import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
-import { mockDoctors } from "@/lib/mockData";
+import { Calendar } from "@/components/Calendar";
+import { TimeSlots } from "@/components/TimeSlots";
+import { useDoctors } from "@/hooks/useDoctors";
+import { useDoctorAvailabilities } from "@/hooks/useDoctorAvailabilities";
 
 export default function DoctorDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
-  // Find the doctor by ID from our mock data
-  const doctor = mockDoctors.find((doc) => doc.id === id);
+  const { data: doctors = [] } = useDoctors();
+  const doctor = doctors.find((doc) => doc.id === id);
   
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
+  
+  const { 
+    data: availableTimeSlots = [], 
+    isLoading: isLoadingAvailabilities 
+  } = useDoctorAvailabilities(id || '', selectedDate);
+
   // Handle doctor not found
   if (!doctor) {
     return (
@@ -32,6 +43,17 @@ export default function DoctorDetail() {
       </div>
     );
   }
+  
+  const handleBookAppointment = () => {
+    if (selectedTimeSlot) {
+      navigate(`/book/${id}`, {
+        state: { 
+          date: selectedDate, 
+          timeSlot: selectedTimeSlot 
+        }
+      });
+    }
+  };
   
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -56,15 +78,7 @@ export default function DoctorDetail() {
               
               <div className="flex justify-center items-center mt-2">
                 <div className="flex items-center bg-healthcare-background px-2 py-1 rounded">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4 text-yellow-500"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                  </svg>
-                  <span className="ml-1 text-sm font-medium">{doctor.rating}</span>
+                  <span className="ml-1 text-sm font-medium">Rating: {doctor.rating}</span>
                 </div>
                 <span className="mx-2 text-gray-300">•</span>
                 <span className="text-sm text-gray-500">{doctor.experience} yrs exp</span>
@@ -83,10 +97,29 @@ export default function DoctorDetail() {
               <p className="text-gray-700 text-sm">{doctor.about}</p>
             </div>
             
+            <div className="mt-6">
+              <h3 className="font-semibold text-lg mb-2">Select Appointment Date</h3>
+              <Calendar 
+                onDateSelect={(date) => setSelectedDate(date)}
+                selectedDate={selectedDate}
+              />
+            </div>
+            
+            <div className="mt-6">
+              <h3 className="font-semibold text-lg mb-2">Available Time Slots</h3>
+              <TimeSlots 
+                doctorId={id || ''} 
+                date={selectedDate}
+                onTimeSlotSelect={setSelectedTimeSlot}
+                selectedTimeSlot={selectedTimeSlot}
+              />
+            </div>
+            
             <div className="mt-8">
               <Button 
                 className="w-full bg-healthcare-primary hover:bg-healthcare-primary/90"
-                onClick={() => navigate(`/book/${doctor.id}`)}
+                disabled={!selectedTimeSlot}
+                onClick={handleBookAppointment}
               >
                 Book Appointment
               </Button>

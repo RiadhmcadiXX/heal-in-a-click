@@ -1,77 +1,45 @@
 
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "@/components/Calendar";
 import { TimeSlots } from "@/components/TimeSlots";
-import { mockDoctors } from "@/lib/mockData";
+import { useDoctors } from "@/hooks/useDoctors";
 import { TimeSlot } from "@/types";
 
 export default function BookAppointment() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-  const [doctor, setDoctor] = useState(mockDoctors.find((doc) => doc.id === id));
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null);
-  const [isVerifying, setIsVerifying] = useState(false);
+  const location = useLocation();
   
-  useEffect(() => {
-    // Reset selected time slot when date changes
-    setSelectedTimeSlot(null);
-  }, [selectedDate]);
+  const { data: doctors = [] } = useDoctors();
+  const [doctor] = doctors.filter((doc) => doc.id === id);
   
-  const handleDateSelect = (date: string) => {
-    setSelectedDate(date);
-  };
-  
-  const handleTimeSlotSelect = (timeSlot: TimeSlot) => {
-    setSelectedTimeSlot(timeSlot);
-  };
+  const [selectedDate, setSelectedDate] = useState(
+    location.state?.date || new Date().toISOString().split('T')[0]
+  );
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(
+    location.state?.timeSlot || null
+  );
   
   const handleBookAppointment = async () => {
     if (!selectedTimeSlot) return;
     
-    setIsVerifying(true);
-    
     try {
-      // Simulate real-time verification
+      // In a real app, you would:
+      // 1. Check if the user is authenticated
+      // 2. Insert appointment into Supabase
+      // 3. Update time slot availability
+      
+      // Simulate booking process
       await new Promise((resolve) => setTimeout(resolve, 1000));
       
-      // Simulate booking success
-      setIsLoading(true);
-      
-      // In a real app with Supabase this would be:
-      // const { data, error } = await supabase
-      //   .from('appointments')
-      //   .insert({
-      //     user_id: currentUser.id,
-      //     doctor_id: doctor!.id,
-      //     time_slot_id: selectedTimeSlot.id,
-      //     date: selectedDate,
-      //     start_time: selectedTimeSlot.startTime,
-      //     end_time: selectedTimeSlot.endTime,
-      //     status: 'scheduled'
-      //   });
-      
-      // And then update time slot availability:
-      // await supabase
-      //   .from('doctor_availabilities')
-      //   .update({ is_booked: true })
-      //   .eq('id', selectedTimeSlot.id);
-      
-      // Mock successful booking
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       navigate("/appointments");
     } catch (error) {
-      console.error("Error booking appointment:", error);
-      // Handle error - show message to user
-    } finally {
-      setIsVerifying(false);
-      setIsLoading(false);
+      console.error("Booking failed", error);
     }
   };
   
@@ -121,7 +89,10 @@ export default function BookAppointment() {
         
         <div className="mb-4">
           <h3 className="font-semibold mb-2">Select Date</h3>
-          <Calendar onDateSelect={handleDateSelect} selectedDate={selectedDate} />
+          <Calendar 
+            onDateSelect={setSelectedDate} 
+            selectedDate={selectedDate} 
+          />
         </div>
         
         <div>
@@ -129,7 +100,7 @@ export default function BookAppointment() {
           <TimeSlots
             doctorId={doctor.id}
             date={selectedDate}
-            onTimeSlotSelect={handleTimeSlotSelect}
+            onTimeSlotSelect={setSelectedTimeSlot}
             selectedTimeSlot={selectedTimeSlot}
           />
         </div>
@@ -137,23 +108,18 @@ export default function BookAppointment() {
         <div className="mt-8">
           <Button 
             className="w-full bg-healthcare-primary hover:bg-healthcare-primary/90"
-            disabled={!selectedTimeSlot || isLoading || isVerifying}
+            disabled={!selectedTimeSlot}
             onClick={handleBookAppointment}
           >
-            {isVerifying ? (
-              "Verifying availability..."
-            ) : isLoading ? (
-              "Booking appointment..."
-            ) : (
-              "Confirm Booking"
-            )}
+            Confirm Booking
           </Button>
+          
           {selectedTimeSlot && (
             <p className="text-center text-sm text-gray-500 mt-2">
               {new Date(selectedDate).toLocaleDateString('en-US', { 
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric'
+                weekday: 'short', 
+                month: 'short', 
+                day: 'numeric' 
               })} • {selectedTimeSlot.startTime} - {selectedTimeSlot.endTime}
             </p>
           )}
