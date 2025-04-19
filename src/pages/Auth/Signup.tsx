@@ -6,42 +6,48 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Header } from "@/components/Header";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function SignupPage() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
   
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
     
     try {
-      // In a real app, this would connect to Supabase Auth:
-      // const { data, error } = await supabase.auth.signUp({
-      //   email,
-      //   password,
-      //   options: {
-      //     data: {
-      //       firstName,
-      //       lastName,
-      //     }
-      //   }
-      // });
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+          }
+        }
+      });
       
-      // if (error) throw error;
+      if (error) throw error;
       
-      // Mock successful signup
-      setTimeout(() => {
-        navigate("/");
-      }, 1000);
-    } catch (error) {
-      setError("Something went wrong. Please try again.");
+      toast({
+        title: "Account created successfully!",
+        description: "Please verify your email to continue.",
+      });
+      
+      navigate("/login");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to create account",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -61,12 +67,6 @@ export default function SignupPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSignup} className="space-y-4">
-              {error && (
-                <div className="bg-red-50 text-red-500 text-sm p-3 rounded">
-                  {error}
-                </div>
-              )}
-              
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">First name</Label>
@@ -121,18 +121,6 @@ export default function SignupPage() {
               >
                 {isLoading ? "Creating account..." : "Create account"}
               </Button>
-              
-              <p className="text-xs text-center text-gray-500 mt-4">
-                By creating an account, you agree to our{" "}
-                <Link to="/terms" className="text-healthcare-primary hover:underline">
-                  Terms of Service
-                </Link>{" "}
-                and{" "}
-                <Link to="/privacy" className="text-healthcare-primary hover:underline">
-                  Privacy Policy
-                </Link>
-                .
-              </p>
             </form>
           </CardContent>
           <CardFooter className="flex justify-center">
