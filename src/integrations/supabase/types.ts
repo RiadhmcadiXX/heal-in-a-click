@@ -135,11 +135,14 @@ export type Database = {
           city: string | null
           consultation_fee: number | null
           created_at: string | null
+          education: string[] | null
           experience: number | null
           first_name: string
           id: string
+          languages: string[] | null
           last_name: string
           phone: string | null
+          profile_image_url: string | null
           specialty: string
           user_id: string
         }
@@ -149,11 +152,14 @@ export type Database = {
           city?: string | null
           consultation_fee?: number | null
           created_at?: string | null
+          education?: string[] | null
           experience?: number | null
           first_name: string
           id?: string
+          languages?: string[] | null
           last_name: string
           phone?: string | null
+          profile_image_url?: string | null
           specialty: string
           user_id: string
         }
@@ -163,11 +169,14 @@ export type Database = {
           city?: string | null
           consultation_fee?: number | null
           created_at?: string | null
+          education?: string[] | null
           experience?: number | null
           first_name?: string
           id?: string
+          languages?: string[] | null
           last_name?: string
           phone?: string | null
+          profile_image_url?: string | null
           specialty?: string
           user_id?: string
         }
