@@ -28,7 +28,7 @@ export default function LoginPage() {
       
       if (error) throw error;
       
-      navigate("/");
+      navigate("/dashboard");
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -47,9 +47,9 @@ export default function LoginPage() {
       <main className="flex-1 container max-w-md mx-auto px-4 py-8">
         <Card>
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Welcome back</CardTitle>
+            <CardTitle className="text-2xl text-center">Doctor Login</CardTitle>
             <CardDescription className="text-center">
-              Enter your credentials to sign in to your account
+              Enter your credentials to access your appointments
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -59,7 +59,7 @@ export default function LoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="doctor@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -98,7 +98,7 @@ export default function LoginPage() {
             <div className="text-sm text-gray-500">
               Don't have an account?{" "}
               <Link to="/signup" className="text-healthcare-primary hover:underline">
-                Sign up
+                Register as a doctor
               </Link>
             </div>
           </CardFooter>

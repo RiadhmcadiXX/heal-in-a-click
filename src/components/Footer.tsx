@@ -3,22 +3,29 @@ import { Link } from "react-router-dom";
 import { Calendar, User } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 export function Footer() {
   const location = useLocation();
+  const { user } = useAuth();
   
   const isActive = (path: string) => {
     return location.pathname === path;
   };
   
+  // If user is not logged in, don't show the footer on auth pages
+  if (!user && (location.pathname === "/login" || location.pathname === "/signup")) {
+    return null;
+  }
+  
   return (
     <footer className="fixed bottom-0 w-full bg-white border-t py-3 px-4 md:px-6">
       <div className="flex items-center justify-around max-w-md mx-auto">
         <Link 
-          to="/" 
+          to={user ? "/dashboard" : "/"} 
           className={cn(
             "flex flex-col items-center text-sm",
-            isActive("/") ? "text-healthcare-primary font-medium" : "text-gray-500"
+            isActive("/dashboard") ? "text-healthcare-primary font-medium" : "text-gray-500"
           )}
         >
           <svg 
@@ -35,18 +42,18 @@ export function Footer() {
               d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" 
             />
           </svg>
-          <span>Home</span>
+          <span>{user ? "Dashboard" : "Home"}</span>
         </Link>
         
         <Link 
-          to="/appointments" 
+          to={user ? "/availability" : "/appointments"} 
           className={cn(
             "flex flex-col items-center text-sm", 
-            isActive("/appointments") ? "text-healthcare-primary font-medium" : "text-gray-500"
+            isActive("/availability") || isActive("/appointments") ? "text-healthcare-primary font-medium" : "text-gray-500"
           )}
         >
           <Calendar className="h-6 w-6" />
-          <span>Appointments</span>
+          <span>{user ? "Availability" : "Appointments"}</span>
         </Link>
         
         <Link 

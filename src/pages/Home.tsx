@@ -1,62 +1,58 @@
 
-import { useState } from "react";
-import { Input } from "@/components/ui/input";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { DoctorCard } from "@/components/DoctorCard";
-import { SpecialtyFilter } from "@/components/SpecialtyFilter";
-import { useDoctors } from "@/hooks/useDoctors";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Home() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [specialty, setSpecialty] = useState("");
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
   
-  const { data: doctors = [], isLoading, error } = useDoctors(searchQuery, specialty);
+  useEffect(() => {
+    // If user is logged in, redirect to dashboard
+    if (user && !loading) {
+      navigate("/dashboard");
+    }
+  }, [user, loading, navigate]);
   
-  const handleFilterChange = (selectedSpecialty: string) => {
-    setSpecialty(selectedSpecialty);
-  };
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+  
+  if (user) {
+    return null; // Will redirect in useEffect
+  }
   
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen">
       <Header />
       
-      <main className="flex-1 container max-w-md mx-auto px-4 pb-24 pt-4">
-        <div className="mb-4">
-          <Input
-            type="text"
-            placeholder="Search doctors, specialties, locations..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-white"
-          />
-        </div>
+      <main className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+        <h1 className="text-3xl font-bold mb-4">Welcome to Heal-in-a-Click</h1>
+        <h2 className="text-xl text-gray-600 mb-8">Doctor Portal</h2>
         
-        <SpecialtyFilter onFilterChange={handleFilterChange} />
+        <p className="max-w-md mb-8 text-gray-600">
+          Manage your appointments, set your availability, and connect with patients all in one place.
+        </p>
         
-        <div className="mt-6">
-          {isLoading ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500">Loading doctors...</p>
-            </div>
-          ) : error ? (
-            <div className="text-center py-8">
-              <p className="text-red-500">Error loading doctors. Please try again.</p>
-            </div>
-          ) : doctors.length > 0 ? (
-            doctors.map((doctor) => (
-              <DoctorCard key={doctor.id} doctor={doctor} />
-            ))
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-gray-500">No doctors found matching your criteria.</p>
-              <p className="text-gray-500 text-sm mt-1">Try adjusting your filters.</p>
-            </div>
-          )}
+        <div className="space-y-4 w-full max-w-xs">
+          <Button 
+            className="w-full bg-healthcare-primary hover:bg-healthcare-primary/90"
+            onClick={() => navigate("/login")}
+          >
+            Sign In
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={() => navigate("/signup")}
+          >
+            Register as a Doctor
+          </Button>
         </div>
       </main>
-      
-      <Footer />
     </div>
   );
 }

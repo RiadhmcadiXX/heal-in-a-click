@@ -1,23 +1,29 @@
 
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { ChevronLeft, User } from "lucide-react";
+import { ChevronLeft, User, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 export function Header() {
   const location = useLocation();
-  const [isLoggedIn, setIsLoggedIn] = useState(true); // For demonstration purposes
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   
-  // Determine if we should show back button (not on home page)
-  const showBackButton = location.pathname !== "/";
+  // Determine if we should show back button (not on dashboard)
+  const showBackButton = !["/", "/dashboard"].includes(location.pathname);
   
   // Determine page title based on route
   const getPageTitle = () => {
     switch (location.pathname) {
       case "/":
-        return "Find Doctors";
+        return "Doctor Portal";
+      case "/dashboard":
+        return "Doctor Dashboard";
       case "/appointments":
         return "My Appointments";
+      case "/availability":
+        return "Manage Availability";
       case "/profile":
         return "My Profile";
       case "/login":
@@ -25,25 +31,17 @@ export function Header() {
       case "/signup":
         return "Sign Up";
       default:
-        if (location.pathname.startsWith("/doctor/")) {
-          return "Doctor Profile";
-        }
-        if (location.pathname.startsWith("/book/")) {
-          return "Book Appointment";
-        }
         return "Heal-in-a-Click";
     }
   };
   
   return (
     <header className="sticky top-0 z-50 bg-white border-b py-4 px-4">
-      <div className="flex items-center justify-between max-w-md mx-auto">
+      <div className="flex items-center justify-between max-w-3xl mx-auto">
         {showBackButton ? (
-          <Link to="/" className="flex items-center">
-            <Button variant="ghost" size="icon" className="mr-2">
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-          </Link>
+          <Button variant="ghost" size="icon" className="mr-2" onClick={() => navigate(-1)}>
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
         ) : (
           <div className="text-healthcare-primary font-bold text-lg">Heal-in-a-Click</div>
         )}
@@ -52,11 +50,24 @@ export function Header() {
           {getPageTitle()}
         </h1>
         
-        <Link to={isLoggedIn ? "/profile" : "/login"}>
-          <Button variant="ghost" size="icon">
-            <User className="h-5 w-5" />
-          </Button>
-        </Link>
+        {user ? (
+          <div className="flex items-center space-x-2">
+            <Link to="/profile">
+              <Button variant="ghost" size="icon">
+                <User className="h-5 w-5" />
+              </Button>
+            </Link>
+            <Button variant="ghost" size="icon" onClick={signOut}>
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
+        ) : (
+          <Link to="/login">
+            <Button variant="ghost" size="icon">
+              <User className="h-5 w-5" />
+            </Button>
+          </Link>
+        )}
       </div>
     </header>
   );
