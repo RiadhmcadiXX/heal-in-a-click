@@ -1,17 +1,16 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { format, addDays } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { DoctorAvailabilityCalendar } from "@/components/DoctorAvailabilityCalendar";
+import { AvailabilityTimeSlots } from "@/components/AvailabilityTimeSlots";
+import { useAvailabilityManager } from "@/hooks/useAvailabilityManager";
 
 const timeSlots = [
   { label: "9:00 AM", value: "09:00:00" },
@@ -30,11 +29,7 @@ export default function ManageAvailability() {
   const { user, loading } = useAuth();
   const { toast } = useToast();
   const [doctor, setDoctor] = useState<any>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
-  const [existingSlots, setExistingSlots] = useState<Record<string, string[]>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
+  
   // Fetch doctor data
   useEffect(() => {
     async function fetchDoctorData() {
@@ -65,52 +60,15 @@ export default function ManageAvailability() {
     }
   }, [user, toast]);
 
-  // Fetch existing availability slots for the next 30 days
-  useEffect(() => {
-    async function fetchAvailability() {
-      if (!doctor) return;
-
-      try {
-        const startDate = format(new Date(), 'yyyy-MM-dd');
-        const endDate = format(addDays(new Date(), 30), 'yyyy-MM-dd');
-
-        const { data, error } = await supabase
-          .from('doctor_availabilities')
-          .select('*')
-          .eq('doctor_id', doctor.id)
-          .gte('available_date', startDate)
-          .lte('available_date', endDate);
-
-        if (error) throw error;
-
-        // Organize slots by date
-        const slots: Record<string, string[]> = {};
-        data?.forEach(slot => {
-          const date = slot.available_date;
-          if (!slots[date]) {
-            slots[date] = [];
-          }
-          slots[date].push(slot.available_time);
-        });
-
-        setExistingSlots(slots);
-      } catch (error: any) {
-        console.error('Error fetching availability:', error);
-      }
-    }
-
-    if (doctor) {
-      fetchAvailability();
-    }
-  }, [doctor]);
-
-  // Update selected slots when date changes
-  useEffect(() => {
-    if (selectedDate) {
-      const dateString = format(selectedDate, 'yyyy-MM-dd');
-      setSelectedSlots(existingSlots[dateString] || []);
-    }
-  }, [selectedDate, existingSlots]);
+  // Use availability manager hook
+  const {
+    selectedDate,
+    setSelectedDate,
+    selectedSlots,
+    setSelectedSlots,
+    isSubmitting,
+    handleSaveAvailability
+  } = useAvailabilityManager(doctor?.id);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -118,66 +76,6 @@ export default function ManageAvailability() {
       navigate('/login');
     }
   }, [loading, user, navigate]);
-
-  const handleSlotToggle = (time: string) => {
-    setSelectedSlots(prev =>
-      prev.includes(time)
-        ? prev.filter(slot => slot !== time)
-        : [...prev, time]
-    );
-  };
-
-  const handleSaveAvailability = async () => {
-    if (!doctor || !selectedDate) return;
-
-    setIsSubmitting(true);
-
-    try {
-      const dateString = format(selectedDate, 'yyyy-MM-dd');
-
-      // Delete existing slots for this date
-      await supabase
-        .from('doctor_availabilities')
-        .delete()
-        .eq('doctor_id', doctor.id)
-        .eq('available_date', dateString);
-
-      // Insert new slots
-      if (selectedSlots.length > 0) {
-        const slotsToInsert = selectedSlots.map(time => ({
-          doctor_id: doctor.id,
-          available_date: dateString,
-          available_time: time
-        }));
-
-        const { error } = await supabase
-          .from('doctor_availabilities')
-          .insert(slotsToInsert);
-
-        if (error) throw error;
-      }
-
-      // Update local state
-      setExistingSlots(prev => ({
-        ...prev,
-        [dateString]: selectedSlots
-      }));
-
-      toast({
-        title: "Success",
-        description: "Your availability has been updated",
-      });
-    } catch (error: any) {
-      console.error('Error saving availability:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to save availability",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   if (loading || !user) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
@@ -209,39 +107,14 @@ export default function ManageAvailability() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">
-                {selectedDate ? `Available Times for ${format(selectedDate, 'MMMM d, yyyy')}` : "Select a date"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {selectedDate && (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    {timeSlots.map((slot) => (
-                      <div key={slot.value} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={slot.value}
-                          checked={selectedSlots.includes(slot.value)}
-                          onCheckedChange={() => handleSlotToggle(slot.value)}
-                        />
-                        <Label htmlFor={slot.value}>{slot.label}</Label>
-                      </div>
-                    ))}
-                  </div>
-
-                  <Button
-                    onClick={handleSaveAvailability}
-                    className="w-full bg-healthcare-primary hover:bg-healthcare-primary/90"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Saving..." : "Save Availability"}
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <AvailabilityTimeSlots
+            selectedDate={selectedDate}
+            selectedSlots={selectedSlots}
+            onSlotsChange={setSelectedSlots}
+            onSave={handleSaveAvailability}
+            isSubmitting={isSubmitting}
+            timeSlots={timeSlots}
+          />
         </div>
 
         <div className="mt-6">

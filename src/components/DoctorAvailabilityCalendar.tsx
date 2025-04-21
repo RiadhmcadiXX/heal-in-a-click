@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface DoctorAvailabilityCalendarProps {
   doctorId: string;
@@ -154,6 +154,7 @@ export function DoctorAvailabilityCalendar({
   const goToPreviousMonth = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
   };
+  
   const goToNextMonth = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
   };
@@ -168,14 +169,22 @@ export function DoctorAvailabilityCalendar({
   return (
     <Card className="p-4 w-full">
       <div className="flex justify-between items-center mb-4">
-        <button onClick={goToPreviousMonth} className="p-1 rounded-full hover:bg-gray-100">
-          <CalendarIcon className="h-5 w-5" />
+        <button 
+          onClick={goToPreviousMonth} 
+          className="p-1 rounded-full hover:bg-gray-100"
+          aria-label="Previous month"
+        >
+          <ChevronLeft className="h-5 w-5" />
         </button>
         <h2 className="text-lg font-medium">
           {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
         </h2>
-        <button onClick={goToNextMonth} className="p-1 rounded-full hover:bg-gray-100">
-          <CalendarIcon className="h-5 w-5 rotate-180" />
+        <button 
+          onClick={goToNextMonth} 
+          className="p-1 rounded-full hover:bg-gray-100"
+          aria-label="Next month"
+        >
+          <ChevronRight className="h-5 w-5" />
         </button>
       </div>
 
@@ -223,7 +232,7 @@ export function DoctorAvailabilityCalendar({
               key={idx}
               className={cn(
                 "h-14 w-full rounded-xl flex flex-col items-center justify-center text-base transition-all focus:outline-none",
-                bg,
+                day.isCurrentMonth ? bg : "bg-gray-50 text-gray-300",
                 text,
                 border,
                 isSelected && "shadow-lg",
