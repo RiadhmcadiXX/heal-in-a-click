@@ -20,17 +20,17 @@ export function InternalNoteModal({
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // Effect to load note (simulate fetching "private_notes" if it exists)
+  // Effect to load note from the existing notes field
   useEffect(() => {
-    setNote(appointment.private_notes || "");
+    setNote(appointment.notes || "");
   }, [appointment, open]);
 
   async function saveNote() {
     setSaving(true);
-    // Use a "private_notes" field if it exists, otherwise save into notes
+    // Use the notes field that exists in the database
     const { error } = await supabase
       .from("appointments")
-      .update({ private_notes: note })
+      .update({ notes: note })
       .eq("id", appointment.id);
 
     setSaving(false);
