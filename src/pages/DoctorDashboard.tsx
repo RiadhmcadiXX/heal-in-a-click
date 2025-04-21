@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar as CalendarIcon, Plus, Clock } from "lucide-react";
@@ -14,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/use-toast";
+import { AppointmentActions } from "@/components/AppointmentActions";
 
 export default function DoctorDashboard() {
   const navigate = useNavigate();
@@ -25,8 +25,11 @@ export default function DoctorDashboard() {
   const [loadingData, setLoadingData] = useState(true);
   const [monthAppointments, setMonthAppointments] = useState<any[]>([]);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
-  
-  // Fetch doctor data
+
+  const refreshAppointments = () => {
+    setDate(new Date(date));
+  };
+
   useEffect(() => {
     async function fetchDoctorData() {
       if (!user) return;
@@ -56,7 +59,6 @@ export default function DoctorDashboard() {
     }
   }, [user, toast]);
   
-  // Fetch all appointments for the current month (for the calendar dots)
   useEffect(() => {
     async function fetchMonthAppointments() {
       if (!doctor) return;
@@ -88,7 +90,6 @@ export default function DoctorDashboard() {
     }
   }, [doctor, date]);
   
-  // Fetch appointments for selected date
   useEffect(() => {
     async function fetchAppointments() {
       if (!doctor) return;
@@ -128,14 +129,12 @@ export default function DoctorDashboard() {
     }
   }, [doctor, date, toast]);
   
-  // Redirect if not logged in
   useEffect(() => {
     if (!loading && !user) {
       navigate('/login');
     }
   }, [loading, user, navigate]);
   
-  // Format time for display
   const formatTime = (timeString: string) => {
     try {
       const [hours, minutes] = timeString.split(':');
@@ -154,13 +153,11 @@ export default function DoctorDashboard() {
     }
   };
   
-  // Check if a date has appointments (for calendar highlighting)
   const hasAppointmentOnDate = (day: Date) => {
     const formattedDay = format(day, 'yyyy-MM-dd');
     return monthAppointments.some(apt => apt.appointment_date === formattedDay);
   };
   
-  // Handle appointment click
   const handleAppointmentClick = (appointment: any) => {
     setSelectedAppointment(appointment);
   };
@@ -172,7 +169,6 @@ export default function DoctorDashboard() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Header />
-      
       <main className="flex-1 container mx-auto px-4 pb-24 pt-4">
         {doctor && (
           <div className="mb-6">
@@ -183,38 +179,40 @@ export default function DoctorDashboard() {
           </div>
         )}
         
-        <div className="grid grid-cols-1 gap-6">
-          {/* Calendar Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div>Calendar</div>
-                <div className="text-base font-normal">
-                  {format(date, 'MMMM yyyy')}
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={(newDate) => newDate && setDate(newDate)}
-                className="rounded-md border"
-                modifiers={{
-                  hasAppointment: (date) => hasAppointmentOnDate(date),
-                }}
-                modifiersStyles={{
-                  hasAppointment: {
-                    fontWeight: 'bold',
-                    textDecoration: 'underline',
-                    color: 'var(--healthcare-primary)',
-                  }
-                }}
-              />
-            </CardContent>
-          </Card>
-          
-          {/* Appointments List Card */}
+        <div className="flex flex-col md:flex-row gap-6 items-start">
+          <div className="flex-1 w-full md:max-w-xl">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div>Calendar</div>
+                  <div className="text-base font-normal">
+                    {format(date, 'MMMM yyyy')}
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={(newDate) => newDate && setDate(newDate)}
+                  className="rounded-md border w-full mx-auto"
+                  modifiers={{
+                    hasAppointment: (date) => hasAppointmentOnDate(date),
+                  }}
+                  modifiersStyles={{
+                    hasAppointment: {
+                      fontWeight: "bold",
+                      textDecoration: "underline",
+                      color: "var(--healthcare-primary)",
+                    },
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+        
+        <div className="mt-8">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center justify-between">
@@ -242,12 +240,12 @@ export default function DoctorDashboard() {
                         <TableHead>Patient</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Notes</TableHead>
-                        <TableHead className="w-[100px]"></TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {appointments.map((appointment) => (
-                        <TableRow 
+                        <TableRow
                           key={appointment.id}
                           className={cn(
                             selectedAppointment?.id === appointment.id ? "bg-gray-100" : ""
@@ -270,7 +268,8 @@ export default function DoctorDashboard() {
                                 "bg-blue-100 text-blue-800": appointment.status === "scheduled",
                                 "bg-green-100 text-green-800": appointment.status === "completed",
                                 "bg-red-100 text-red-800": appointment.status === "cancelled",
-                                "bg-yellow-100 text-yellow-800": appointment.status === "waiting"
+                                "bg-yellow-100 text-yellow-800": appointment.status === "waiting",
+                                "bg-gray-300 text-gray-900": appointment.status === "no-show"
                               }
                             )}>
                               {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
@@ -280,9 +279,7 @@ export default function DoctorDashboard() {
                             {appointment.notes || "No notes"}
                           </TableCell>
                           <TableCell>
-                            <Button variant="outline" size="sm">
-                              Details
-                            </Button>
+                            <AppointmentActions appointment={appointment} refresh={refreshAppointments} />
                           </TableCell>
                         </TableRow>
                       ))}
@@ -292,9 +289,9 @@ export default function DoctorDashboard() {
               ) : (
                 <div className="text-center py-8 border rounded-md p-6">
                   <p className="text-gray-500">No appointments scheduled for this day.</p>
-                  <Button 
+                  <Button
                     className="mt-4 bg-healthcare-primary hover:bg-healthcare-primary/90"
-                    onClick={() => navigate('/availability')}
+                    onClick={() => navigate("/availability")}
                   >
                     Add Availability
                   </Button>
