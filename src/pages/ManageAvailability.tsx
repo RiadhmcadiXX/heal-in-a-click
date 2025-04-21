@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, addDays } from "date-fns";
-import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,6 +11,7 @@ import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { DoctorAvailabilityCalendar } from "@/components/DoctorAvailabilityCalendar";
 
 const timeSlots = [
   { label: "9:00 AM", value: "09:00:00" },
@@ -34,21 +34,21 @@ export default function ManageAvailability() {
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [existingSlots, setExistingSlots] = useState<Record<string, string[]>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Fetch doctor data
   useEffect(() => {
     async function fetchDoctorData() {
       if (!user) return;
-      
+
       try {
         const { data, error } = await supabase
           .from('doctors')
           .select('*')
           .eq('user_id', user.id)
           .single();
-        
+
         if (error) throw error;
-        
+
         setDoctor(data);
       } catch (error: any) {
         console.error('Error fetching doctor data:', error);
@@ -59,30 +59,30 @@ export default function ManageAvailability() {
         });
       }
     }
-    
+
     if (user) {
       fetchDoctorData();
     }
   }, [user, toast]);
-  
+
   // Fetch existing availability slots for the next 30 days
   useEffect(() => {
     async function fetchAvailability() {
       if (!doctor) return;
-      
+
       try {
         const startDate = format(new Date(), 'yyyy-MM-dd');
         const endDate = format(addDays(new Date(), 30), 'yyyy-MM-dd');
-        
+
         const { data, error } = await supabase
           .from('doctor_availabilities')
           .select('*')
           .eq('doctor_id', doctor.id)
           .gte('available_date', startDate)
           .lte('available_date', endDate);
-        
+
         if (error) throw error;
-        
+
         // Organize slots by date
         const slots: Record<string, string[]> = {};
         data?.forEach(slot => {
@@ -92,18 +92,18 @@ export default function ManageAvailability() {
           }
           slots[date].push(slot.available_time);
         });
-        
+
         setExistingSlots(slots);
       } catch (error: any) {
         console.error('Error fetching availability:', error);
       }
     }
-    
+
     if (doctor) {
       fetchAvailability();
     }
   }, [doctor]);
-  
+
   // Update selected slots when date changes
   useEffect(() => {
     if (selectedDate) {
@@ -111,37 +111,37 @@ export default function ManageAvailability() {
       setSelectedSlots(existingSlots[dateString] || []);
     }
   }, [selectedDate, existingSlots]);
-  
+
   // Redirect if not logged in
   useEffect(() => {
     if (!loading && !user) {
       navigate('/login');
     }
   }, [loading, user, navigate]);
-  
+
   const handleSlotToggle = (time: string) => {
-    setSelectedSlots(prev => 
-      prev.includes(time) 
+    setSelectedSlots(prev =>
+      prev.includes(time)
         ? prev.filter(slot => slot !== time)
         : [...prev, time]
     );
   };
-  
+
   const handleSaveAvailability = async () => {
     if (!doctor || !selectedDate) return;
-    
+
     setIsSubmitting(true);
-    
+
     try {
       const dateString = format(selectedDate, 'yyyy-MM-dd');
-      
+
       // Delete existing slots for this date
       await supabase
         .from('doctor_availabilities')
         .delete()
         .eq('doctor_id', doctor.id)
         .eq('available_date', dateString);
-      
+
       // Insert new slots
       if (selectedSlots.length > 0) {
         const slotsToInsert = selectedSlots.map(time => ({
@@ -149,20 +149,20 @@ export default function ManageAvailability() {
           available_date: dateString,
           available_time: time
         }));
-        
+
         const { error } = await supabase
           .from('doctor_availabilities')
           .insert(slotsToInsert);
-        
+
         if (error) throw error;
       }
-      
+
       // Update local state
       setExistingSlots(prev => ({
         ...prev,
         [dateString]: selectedSlots
       }));
-      
+
       toast({
         title: "Success",
         description: "Your availability has been updated",
@@ -178,37 +178,37 @@ export default function ManageAvailability() {
       setIsSubmitting(false);
     }
   };
-  
+
   if (loading || !user) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
-  
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Header />
-      
+
       <main className="flex-1 container max-w-3xl mx-auto px-4 pb-24 pt-4">
         <div className="mb-6">
           <h1 className="text-2xl font-bold">Manage Your Availability</h1>
           <p className="text-gray-500">Select dates and times when you're available for appointments</p>
         </div>
-        
+
         <div className="grid md:grid-cols-2 gap-6">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-lg">Select Date</CardTitle>
             </CardHeader>
             <CardContent>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                disabled={{ before: new Date() }}
-                className="pointer-events-auto"
-              />
+              {doctor && (
+                <DoctorAvailabilityCalendar
+                  doctorId={doctor.id}
+                  selectedDate={selectedDate}
+                  onDateSelect={setSelectedDate}
+                />
+              )}
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-lg">
@@ -221,7 +221,7 @@ export default function ManageAvailability() {
                   <div className="space-y-2">
                     {timeSlots.map((slot) => (
                       <div key={slot.value} className="flex items-center space-x-2">
-                        <Checkbox 
+                        <Checkbox
                           id={slot.value}
                           checked={selectedSlots.includes(slot.value)}
                           onCheckedChange={() => handleSlotToggle(slot.value)}
@@ -230,8 +230,8 @@ export default function ManageAvailability() {
                       </div>
                     ))}
                   </div>
-                  
-                  <Button 
+
+                  <Button
                     onClick={handleSaveAvailability}
                     className="w-full bg-healthcare-primary hover:bg-healthcare-primary/90"
                     disabled={isSubmitting}
@@ -243,10 +243,10 @@ export default function ManageAvailability() {
             </CardContent>
           </Card>
         </div>
-        
+
         <div className="mt-6">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => navigate('/dashboard')}
             className="w-full"
           >
@@ -254,7 +254,6 @@ export default function ManageAvailability() {
           </Button>
         </div>
       </main>
-      
       <Footer />
     </div>
   );
