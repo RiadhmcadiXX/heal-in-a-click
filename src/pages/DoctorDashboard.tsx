@@ -1,12 +1,13 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar as CalendarIcon, Plus } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,8 @@ export default function DoctorDashboard() {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [date, setDate] = useState<Date>(new Date());
   const [loadingData, setLoadingData] = useState(true);
+  const [monthAppointments, setMonthAppointments] = useState<any[]>([]);
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   
   // Fetch doctor data
   useEffect(() => {
@@ -52,6 +55,38 @@ export default function DoctorDashboard() {
       fetchDoctorData();
     }
   }, [user, toast]);
+  
+  // Fetch all appointments for the current month (for the calendar dots)
+  useEffect(() => {
+    async function fetchMonthAppointments() {
+      if (!doctor) return;
+      
+      try {
+        const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+        const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+        
+        const formattedFirstDay = format(firstDay, 'yyyy-MM-dd');
+        const formattedLastDay = format(lastDay, 'yyyy-MM-dd');
+        
+        const { data, error } = await supabase
+          .from('appointments')
+          .select(`id, appointment_date`)
+          .eq('doctor_id', doctor.id)
+          .gte('appointment_date', formattedFirstDay)
+          .lte('appointment_date', formattedLastDay);
+        
+        if (error) throw error;
+        
+        setMonthAppointments(data || []);
+      } catch (error: any) {
+        console.error('Error fetching month appointments:', error);
+      }
+    }
+    
+    if (doctor) {
+      fetchMonthAppointments();
+    }
+  }, [doctor, date]);
   
   // Fetch appointments for selected date
   useEffect(() => {
@@ -100,6 +135,36 @@ export default function DoctorDashboard() {
     }
   }, [loading, user, navigate]);
   
+  // Format time for display
+  const formatTime = (timeString: string) => {
+    try {
+      const [hours, minutes] = timeString.split(':');
+      const date = new Date();
+      date.setHours(parseInt(hours, 10));
+      date.setMinutes(parseInt(minutes, 10));
+      
+      return date.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: true 
+      });
+    } catch (e) {
+      console.error('Error formatting time:', e);
+      return timeString;
+    }
+  };
+  
+  // Check if a date has appointments (for calendar highlighting)
+  const hasAppointmentOnDate = (day: Date) => {
+    const formattedDay = format(day, 'yyyy-MM-dd');
+    return monthAppointments.some(apt => apt.appointment_date === formattedDay);
+  };
+  
+  // Handle appointment click
+  const handleAppointmentClick = (appointment: any) => {
+    setSelectedAppointment(appointment);
+  };
+  
   if (loading || !user) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
@@ -108,7 +173,7 @@ export default function DoctorDashboard() {
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Header />
       
-      <main className="flex-1 container max-w-3xl mx-auto px-4 pb-24 pt-4">
+      <main className="flex-1 container mx-auto px-4 pb-24 pt-4">
         {doctor && (
           <div className="mb-6">
             <h1 className="text-2xl font-bold">
@@ -118,85 +183,126 @@ export default function DoctorDashboard() {
           </div>
         )}
         
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h2 className="text-xl font-semibold">Your Appointments</h2>
-          </div>
-          
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
-                <CalendarIcon className="h-4 w-4" />
-                <span>{format(date, 'PPP')}</span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
+        <div className="grid grid-cols-1 gap-6">
+          {/* Calendar Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div>Calendar</div>
+                <div className="text-base font-normal">
+                  {format(date, 'MMMM yyyy')}
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               <Calendar
                 mode="single"
                 selected={date}
                 onSelect={(newDate) => newDate && setDate(newDate)}
-                className={cn("p-3 pointer-events-auto")}
+                className="rounded-md border"
+                modifiers={{
+                  hasAppointment: (date) => hasAppointmentOnDate(date),
+                }}
+                modifiersStyles={{
+                  hasAppointment: {
+                    fontWeight: 'bold',
+                    textDecoration: 'underline',
+                    color: 'var(--healthcare-primary)',
+                  }
+                }}
               />
-            </PopoverContent>
-          </Popover>
+            </CardContent>
+          </Card>
+          
+          {/* Appointments List Card */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center justify-between">
+                <div>Appointments for {format(date, 'MMMM d, yyyy')}</div>
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/availability')}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Manage Availability</span>
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loadingData ? (
+                <div className="text-center py-8">Loading appointments...</div>
+              ) : appointments.length > 0 ? (
+                <div className="rounded-md border overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Time</TableHead>
+                        <TableHead>Patient</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Notes</TableHead>
+                        <TableHead className="w-[100px]"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {appointments.map((appointment) => (
+                        <TableRow 
+                          key={appointment.id}
+                          className={cn(
+                            selectedAppointment?.id === appointment.id ? "bg-gray-100" : ""
+                          )}
+                          onClick={() => handleAppointmentClick(appointment)}
+                        >
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-healthcare-primary" />
+                              {formatTime(appointment.appointment_time)}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {appointment.patients?.first_name} {appointment.patients?.last_name}
+                          </TableCell>
+                          <TableCell>
+                            <span className={cn(
+                              "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+                              {
+                                "bg-blue-100 text-blue-800": appointment.status === "scheduled",
+                                "bg-green-100 text-green-800": appointment.status === "completed",
+                                "bg-red-100 text-red-800": appointment.status === "cancelled",
+                                "bg-yellow-100 text-yellow-800": appointment.status === "waiting"
+                              }
+                            )}>
+                              {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                            </span>
+                          </TableCell>
+                          <TableCell className="max-w-[200px] truncate">
+                            {appointment.notes || "No notes"}
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="outline" size="sm">
+                              Details
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="text-center py-8 border rounded-md p-6">
+                  <p className="text-gray-500">No appointments scheduled for this day.</p>
+                  <Button 
+                    className="mt-4 bg-healthcare-primary hover:bg-healthcare-primary/90"
+                    onClick={() => navigate('/availability')}
+                  >
+                    Add Availability
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
-        
-        <Card className="mb-6">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">
-              Appointments for {format(date, 'MMMM d, yyyy')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingData ? (
-              <div className="text-center py-8">Loading appointments...</div>
-            ) : appointments.length > 0 ? (
-              <div className="space-y-4">
-                {appointments.map((appointment) => (
-                  <Card key={appointment.id} className="overflow-hidden">
-                    <div className="p-4 border-l-4 border-healthcare-primary flex justify-between items-start">
-                      <div>
-                        <p className="font-semibold">
-                          {appointment.patients?.first_name} {appointment.patients?.last_name}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {format(new Date(`1970-01-01T${appointment.appointment_time}`), 'h:mm a')}
-                        </p>
-                        {appointment.notes && (
-                          <p className="text-sm mt-2 text-gray-700">{appointment.notes}</p>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          Details
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No appointments for this day.</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Manage Availability</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button 
-              className="w-full bg-healthcare-primary hover:bg-healthcare-primary/90 flex items-center justify-center gap-2"
-              onClick={() => navigate('/availability')}
-            >
-              <Plus className="h-4 w-4" />
-              <span>Add Availability Slots</span>
-            </Button>
-          </CardContent>
-        </Card>
       </main>
       
       <Footer />
