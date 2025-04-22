@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { ProfilePhotoSection } from "@/components/profile/ProfilePhotoSection";
 import { LocationPhotosSection } from "@/components/profile/LocationPhotosSection";
 import { ProfileFormFields } from "@/components/profile/ProfileFormFields";
+import { AvatarSelector } from "@/components/profile/AvatarSelector";
 
 interface DoctorProfile {
   id: string;
@@ -82,6 +82,13 @@ export default function ProfilePage() {
       setIsLoading(false);
     })();
   }, [user]);
+
+  const handleSelectChange = (field: string, value: string) => {
+    setForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
   const handleProfilePhotoUpload = (url: string) => {
     setForm(prev => ({
@@ -196,16 +203,17 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleUpdateProfile} className="space-y-6">
-              <ProfilePhotoSection
-                profileImageUrl={form.profile_image_url}
+              <AvatarSelector
+                selected={form.profile_image_url}
                 firstName={form.first_name}
                 lastName={form.last_name}
-                onPhotoUpload={handleProfilePhotoUpload}
+                onSelect={handleProfilePhotoUpload}
               />
 
               <ProfileFormFields
                 form={form}
                 handleInputChange={handleInputChange}
+                handleSelectChange={handleSelectChange}
                 handleLanguagesChange={handleLanguagesChange}
                 handleEducationChange={handleEducationChange}
               />

@@ -2,6 +2,14 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { SPECIALTIES, CITIES } from "@/lib/constants";
 
 interface ProfileFormFieldsProps {
   form: {
@@ -17,6 +25,7 @@ interface ProfileFormFieldsProps {
     bio: string | null;
   };
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  handleSelectChange: (field: string, value: string) => void;
   handleLanguagesChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleEducationChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
@@ -24,6 +33,7 @@ interface ProfileFormFieldsProps {
 export function ProfileFormFields({
   form,
   handleInputChange,
+  handleSelectChange,
   handleLanguagesChange,
   handleEducationChange,
 }: ProfileFormFieldsProps) {
@@ -97,21 +107,39 @@ export function ProfileFormFields({
         </div>
         <div className="space-y-2">
           <Label htmlFor="city">City</Label>
-          <Input
-            id="city"
-            name="city"
+          <Select
             value={form.city || ""}
-            onChange={handleInputChange}
-          />
+            onValueChange={(value) => handleSelectChange("city", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select a city" />
+            </SelectTrigger>
+            <SelectContent>
+              {CITIES.map((city) => (
+                <SelectItem key={city} value={city}>
+                  {city}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-2">
           <Label htmlFor="specialty">Specialty</Label>
-          <Input
-            id="specialty"
-            name="specialty"
+          <Select
             value={form.specialty}
-            onChange={handleInputChange}
-          />
+            onValueChange={(value) => handleSelectChange("specialty", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select a specialty" />
+            </SelectTrigger>
+            <SelectContent>
+              {SPECIALTIES.map((specialty) => (
+                <SelectItem key={specialty} value={specialty}>
+                  {specialty}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-2">
           <Label htmlFor="consultation_fee">Consultation Fee ($)</Label>
