@@ -1,16 +1,15 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { PhotoUpload } from "@/components/PhotoUpload";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { ProfilePhotoSection } from "@/components/profile/ProfilePhotoSection";
+import { LocationPhotosSection } from "@/components/profile/LocationPhotosSection";
+import { ProfileFormFields } from "@/components/profile/ProfileFormFields";
 
 interface DoctorProfile {
   id: string;
@@ -126,6 +125,7 @@ export default function ProfilePage() {
       languages: e.target.value.split(",").map((v) => v.trim()).filter(Boolean),
     }));
   };
+
   const handleEducationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({
       ...prev,
@@ -196,179 +196,25 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleUpdateProfile} className="space-y-6">
-              <div className="flex flex-col items-center space-y-4">
-                <Avatar className="h-32 w-32">
-                  <AvatarImage src={form.profile_image_url || ''} alt="Profile" />
-                  <AvatarFallback>
-                    {form.first_name?.[0]}{form.last_name?.[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <PhotoUpload
-                  bucketName="doctor_photos"
-                  onUploadComplete={handleProfilePhotoUpload}
-                  className="w-full max-w-xs"
-                />
-              </div>
+              <ProfilePhotoSection
+                profileImageUrl={form.profile_image_url}
+                firstName={form.first_name}
+                lastName={form.last_name}
+                onPhotoUpload={handleProfilePhotoUpload}
+              />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="first_name">First Name</Label>
-                  <Input
-                    id="first_name"
-                    name="first_name"
-                    value={form.first_name}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="last_name">Last Name</Label>
-                  <Input
-                    id="last_name"
-                    name="last_name"
-                    value={form.last_name}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={form.email}
-                    disabled
-                    className="bg-gray-100"
-                  />
-                  <p className="text-xs text-gray-500">
-                    Email cannot be changed.
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    value={form.phone || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="profile_image_url">Profile Image URL</Label>
-                  <Input
-                    id="profile_image_url"
-                    name="profile_image_url"
-                    value={form.profile_image_url || ""}
-                    onChange={handleInputChange}
-                  />
-                  {form.profile_image_url && (
-                    <img
-                      src={form.profile_image_url}
-                      alt="Profile"
-                      className="h-16 w-16 mt-2 rounded-full object-cover border"
-                    />
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="languages">Languages</Label>
-                  <Input
-                    id="languages"
-                    name="languages"
-                    value={form.languages?.join(", ") || ""}
-                    onChange={handleLanguagesChange}
-                    placeholder="English, French, Arabic"
-                  />
-                  <p className="text-xs text-gray-500">Comma-separated (e.g., English, French)</p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="education">Education</Label>
-                  <Input
-                    id="education"
-                    name="education"
-                    value={form.education?.join(", ") || ""}
-                    onChange={handleEducationChange}
-                    placeholder="MD, PhD, MSc"
-                  />
-                  <p className="text-xs text-gray-500">Comma-separated (e.g., MD, MSc)</p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="city">City</Label>
-                  <Input
-                    id="city"
-                    name="city"
-                    value={form.city || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="specialty">Specialty</Label>
-                  <Input
-                    id="specialty"
-                    name="specialty"
-                    value={form.specialty}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="consultation_fee">Consultation Fee ($)</Label>
-                  <Input
-                    id="consultation_fee"
-                    name="consultation_fee"
-                    type="number"
-                    value={form.consultation_fee ?? ""}
-                    onChange={handleInputChange}
-                    min="0"
-                  />
-                </div>
-              </div>
+              <ProfileFormFields
+                form={form}
+                handleInputChange={handleInputChange}
+                handleLanguagesChange={handleLanguagesChange}
+                handleEducationChange={handleEducationChange}
+              />
 
-              <div className="space-y-4">
-                <Label>Location Photos</Label>
-                <div className="grid grid-cols-2 gap-4">
-                  {form.location_photos?.map((url, index) => (
-                    <div key={index} className="relative">
-                      <img
-                        src={url}
-                        alt={`Location ${index + 1}`}
-                        className="w-full h-40 object-cover rounded-md"
-                      />
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="absolute top-2 right-2"
-                        onClick={() => removeLocationPhoto(url)}
-                        type="button"
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-                {(!form.location_photos || form.location_photos.length < 2) && (
-                  <PhotoUpload
-                    bucketName="doctor_photos"
-                    onUploadComplete={handleLocationPhotoUpload}
-                  />
-                )}
-                <p className="text-xs text-gray-500">
-                  You can upload up to 2 photos of your location
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bio">Bio</Label>
-                <Textarea
-                  id="bio"
-                  name="bio"
-                  value={form.bio || ""}
-                  onChange={handleInputChange}
-                  rows={4}
-                />
-                <p className="text-xs text-gray-500">
-                  Tell your patients about your background and philosophy of care.
-                </p>
-              </div>
+              <LocationPhotosSection
+                locationPhotos={form.location_photos || []}
+                onPhotoUpload={handleLocationPhotoUpload}
+                onPhotoRemove={removeLocationPhoto}
+              />
 
               {statusMsg && (
                 <div
