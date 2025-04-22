@@ -63,18 +63,21 @@ export type Database = {
           available_time: string
           doctor_id: string | null
           id: string
+          is_booked: boolean | null
         }
         Insert: {
           available_date: string
           available_time: string
           doctor_id?: string | null
           id?: string
+          is_booked?: boolean | null
         }
         Update: {
           available_date?: string
           available_time?: string
           doctor_id?: string | null
           id?: string
+          is_booked?: boolean | null
         }
         Relationships: [
           {
@@ -141,6 +144,7 @@ export type Database = {
           id: string
           languages: string[] | null
           last_name: string
+          location_photos: string[] | null
           phone: string | null
           profile_image_url: string | null
           specialty: string
@@ -158,6 +162,7 @@ export type Database = {
           id?: string
           languages?: string[] | null
           last_name: string
+          location_photos?: string[] | null
           phone?: string | null
           profile_image_url?: string | null
           specialty: string
@@ -175,6 +180,7 @@ export type Database = {
           id?: string
           languages?: string[] | null
           last_name?: string
+          location_photos?: string[] | null
           phone?: string | null
           profile_image_url?: string | null
           specialty?: string

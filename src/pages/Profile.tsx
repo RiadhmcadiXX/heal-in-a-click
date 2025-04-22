@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,8 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { PhotoUpload } from "@/components/PhotoUpload";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface DoctorProfile {
   id: string;
@@ -24,6 +25,7 @@ interface DoctorProfile {
   specialty: string;
   consultation_fee: number | null;
   bio: string | null;
+  location_photos: string[] | null;
 }
 
 export default function ProfilePage() {
@@ -43,10 +45,10 @@ export default function ProfilePage() {
     specialty: "",
     consultation_fee: null,
     bio: "",
+    location_photos: [],
   });
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
-  // Fetch profile for logged-in doctor
   useEffect(() => {
     if (!user) return;
     (async () => {
@@ -75,13 +77,34 @@ export default function ProfilePage() {
           specialty: data.specialty ?? "",
           consultation_fee: data.consultation_fee ?? null,
           bio: data.bio ?? "",
+          location_photos: data.location_photos ?? [],
         });
       }
       setIsLoading(false);
     })();
   }, [user]);
 
-  // Update input value in form
+  const handleProfilePhotoUpload = (url: string) => {
+    setForm(prev => ({
+      ...prev,
+      profile_image_url: url
+    }));
+  };
+
+  const handleLocationPhotoUpload = (url: string) => {
+    setForm(prev => ({
+      ...prev,
+      location_photos: [...(prev.location_photos || []), url]
+    }));
+  };
+
+  const removeLocationPhoto = (urlToRemove: string) => {
+    setForm(prev => ({
+      ...prev,
+      location_photos: prev.location_photos?.filter(url => url !== urlToRemove) || []
+    }));
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     if (name === "consultation_fee") {
@@ -97,7 +120,6 @@ export default function ProfilePage() {
     }
   };
 
-  // Languages and education comma-separated to array
   const handleLanguagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({
       ...prev,
@@ -130,6 +152,7 @@ export default function ProfilePage() {
         specialty: form.specialty,
         consultation_fee: form.consultation_fee,
         bio: form.bio,
+        location_photos: form.location_photos,
       })
       .eq("id", profile.id);
 
@@ -172,7 +195,21 @@ export default function ProfilePage() {
             <CardTitle>Doctor Profile</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleUpdateProfile} className="space-y-4">
+            <form onSubmit={handleUpdateProfile} className="space-y-6">
+              <div className="flex flex-col items-center space-y-4">
+                <Avatar className="h-32 w-32">
+                  <AvatarImage src={form.profile_image_url || ''} alt="Profile" />
+                  <AvatarFallback>
+                    {form.first_name?.[0]}{form.last_name?.[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <PhotoUpload
+                  bucketName="doctor_photos"
+                  onUploadComplete={handleProfilePhotoUpload}
+                  className="w-full max-w-xs"
+                />
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="first_name">First Name</Label>
@@ -284,6 +321,39 @@ export default function ProfilePage() {
                     min="0"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-4">
+                <Label>Location Photos</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  {form.location_photos?.map((url, index) => (
+                    <div key={index} className="relative">
+                      <img
+                        src={url}
+                        alt={`Location ${index + 1}`}
+                        className="w-full h-40 object-cover rounded-md"
+                      />
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={() => removeLocationPhoto(url)}
+                        type="button"
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                {(!form.location_photos || form.location_photos.length < 2) && (
+                  <PhotoUpload
+                    bucketName="doctor_photos"
+                    onUploadComplete={handleLocationPhotoUpload}
+                  />
+                )}
+                <p className="text-xs text-gray-500">
+                  You can upload up to 2 photos of your location
+                </p>
               </div>
 
               <div className="space-y-2">
