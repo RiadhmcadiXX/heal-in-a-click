@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Check, X, Info, CalendarX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 
 export function AppointmentStatusMenu({ appointment, refresh }: { appointment: any; refresh: () => void }) {
   const { toast } = useToast();
@@ -18,10 +18,18 @@ export function AppointmentStatusMenu({ appointment, refresh }: { appointment: a
       .from("appointments")
       .update({ status, ...extra })
       .eq("id", appointment.id);
+
     if (error) {
       toast({ variant: "destructive", title: "Error", description: "Failed to update status" });
     } else {
-      toast({ title: "Success", description: `Marked as ${status}` });
+      const statusMessage = status === 'cancelled' 
+        ? `Appointment cancelled${cancelReason ? `: ${cancelReason}` : ''}`
+        : `Appointment marked as ${status}`;
+
+      toast({ 
+        title: "Status Updated",
+        description: `${appointment.patients?.first_name} ${appointment.patients?.last_name} - ${statusMessage}`
+      });
       refresh();
     }
   }

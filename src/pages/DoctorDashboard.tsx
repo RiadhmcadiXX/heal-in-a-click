@@ -5,7 +5,6 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -161,6 +160,46 @@ export default function DoctorDashboard() {
   const handleAppointmentClick = (appointment: any) => {
     setSelectedAppointment(appointment);
   };
+  
+  useEffect(() => {
+    if (!doctor) return;
+
+    const channel = supabase
+      .channel('appointment-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'appointments',
+          filter: `doctor_id=eq.${doctor.id}`,
+        },
+        async (payload: any) => {
+          // Fetch the complete appointment data including patient info
+          const { data: appointmentData } = await supabase
+            .from('appointments')
+            .select(`
+              *,
+              patients(first_name, last_name)
+            `)
+            .eq('id', payload.new.id)
+            .single();
+
+          if (appointmentData) {
+            toast({
+              title: "New Appointment",
+              description: `${appointmentData.patients.first_name} ${appointmentData.patients.last_name} booked for ${format(new Date(appointmentData.appointment_date), 'MMMM d, yyyy')} at ${format(new Date(`2000-01-01T${appointmentData.appointment_time}`), 'h:mm a')}`,
+            });
+            refreshAppointments();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [doctor, toast]);
   
   if (loading || !user) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
