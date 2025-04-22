@@ -1,33 +1,29 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar as CalendarIcon, Plus, Clock } from "lucide-react";
+import { Plus } from "lucide-react";
 import { format } from "date-fns";
-import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card } from "@/components/ui/card";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/components/ui/use-toast";
-import { AppointmentActions } from "@/components/AppointmentActions";
+import { useToast } from "@/hooks/use-toast";
+import { MonthlyCalendar } from "@/components/MonthlyCalendar";
+import { AppointmentsTable } from "@/components/AppointmentsTable";
+import { useDoctorAppointments } from "@/hooks/useDoctorAppointments";
 
 export default function DoctorDashboard() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const { toast } = useToast();
   const [doctor, setDoctor] = useState<any>(null);
-  const [appointments, setAppointments] = useState<any[]>([]);
   const [date, setDate] = useState<Date>(new Date());
-  const [loadingData, setLoadingData] = useState(true);
   const [monthAppointments, setMonthAppointments] = useState<any[]>([]);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
-
-  const refreshAppointments = () => {
-    setDate(new Date(date));
-  };
+  
+  const { appointments, loading: loadingData, refreshAppointments } = useDoctorAppointments(doctor?.id, date);
 
   useEffect(() => {
     async function fetchDoctorData() {
@@ -88,118 +84,17 @@ export default function DoctorDashboard() {
       fetchMonthAppointments();
     }
   }, [doctor, date]);
-  
-  useEffect(() => {
-    async function fetchAppointments() {
-      if (!doctor) return;
-      
-      setLoadingData(true);
-      
-      try {
-        const formattedDate = format(date, 'yyyy-MM-dd');
-        
-        const { data, error } = await supabase
-          .from('appointments')
-          .select(`
-            *,
-            patients(first_name, last_name)
-          `)
-          .eq('doctor_id', doctor.id)
-          .eq('appointment_date', formattedDate)
-          .order('appointment_time', { ascending: true });
-        
-        if (error) throw error;
-        
-        setAppointments(data || []);
-      } catch (error: any) {
-        console.error('Error fetching appointments:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to fetch appointments",
-        });
-      } finally {
-        setLoadingData(false);
-      }
-    }
-    
-    if (doctor) {
-      fetchAppointments();
-    }
-  }, [doctor, date, toast]);
-  
+
   useEffect(() => {
     if (!loading && !user) {
       navigate('/login');
     }
   }, [loading, user, navigate]);
   
-  const formatTime = (timeString: string) => {
-    try {
-      const [hours, minutes] = timeString.split(':');
-      const date = new Date();
-      date.setHours(parseInt(hours, 10));
-      date.setMinutes(parseInt(minutes, 10));
-      
-      return date.toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
-        minute: '2-digit',
-        hour12: true 
-      });
-    } catch (e) {
-      console.error('Error formatting time:', e);
-      return timeString;
-    }
-  };
-  
   const hasAppointmentOnDate = (day: Date) => {
     const formattedDay = format(day, 'yyyy-MM-dd');
     return monthAppointments.some(apt => apt.appointment_date === formattedDay);
   };
-  
-  const handleAppointmentClick = (appointment: any) => {
-    setSelectedAppointment(appointment);
-  };
-  
-  useEffect(() => {
-    if (!doctor) return;
-
-    const channel = supabase
-      .channel('appointment-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'appointments',
-          filter: `doctor_id=eq.${doctor.id}`,
-        },
-        async (payload: any) => {
-          // Fetch the complete appointment data including patient info
-          const { data: appointmentData } = await supabase
-            .from('appointments')
-            .select(`
-              *,
-              patients(first_name, last_name)
-            `)
-            .eq('id', payload.new.id)
-            .single();
-
-          if (appointmentData) {
-            toast({
-              title: "New Appointment",
-              description: `${appointmentData.patients.first_name} ${appointmentData.patients.last_name} booked for ${format(new Date(appointmentData.appointment_date), 'MMMM d, yyyy')} at ${format(new Date(`2000-01-01T${appointmentData.appointment_time}`), 'h:mm a')}`,
-            });
-            refreshAppointments();
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [doctor, toast]);
   
   if (loading || !user) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
@@ -220,42 +115,21 @@ export default function DoctorDashboard() {
         
         <div className="flex flex-col md:flex-row gap-6 items-start">
           <div className="flex-1 w-full md:max-w-xl">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div>Calendar</div>
-                  <div className="text-base font-normal">
-                    {format(date, 'MMMM yyyy')}
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={(newDate) => newDate && setDate(newDate)}
-                  className="rounded-md border w-full mx-auto"
-                  modifiers={{
-                    hasAppointment: (date) => hasAppointmentOnDate(date),
-                  }}
-                  modifiersStyles={{
-                    hasAppointment: {
-                      fontWeight: "bold",
-                      textDecoration: "underline",
-                      color: "var(--healthcare-primary)",
-                    },
-                  }}
-                />
-              </CardContent>
-            </Card>
+            <MonthlyCalendar
+              date={date}
+              onDateSelect={(newDate) => newDate && setDate(newDate)}
+              hasAppointmentOnDate={hasAppointmentOnDate}
+            />
           </div>
         </div>
         
         <div className="mt-8">
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center justify-between">
-                <div>Appointments for {format(date, 'MMMM d, yyyy')}</div>
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">
+                  Appointments for {format(date, 'MMMM d, yyyy')}
+                </h2>
                 <Button 
                   variant="outline"
                   size="sm"
@@ -265,66 +139,17 @@ export default function DoctorDashboard() {
                   <Plus className="h-4 w-4" />
                   <span>Manage Availability</span>
                 </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+              </div>
+              
               {loadingData ? (
                 <div className="text-center py-8">Loading appointments...</div>
               ) : appointments.length > 0 ? (
-                <div className="rounded-md border overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Time</TableHead>
-                        <TableHead>Patient</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Notes</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {appointments.map((appointment) => (
-                        <TableRow
-                          key={appointment.id}
-                          className={cn(
-                            selectedAppointment?.id === appointment.id ? "bg-gray-100" : ""
-                          )}
-                          onClick={() => handleAppointmentClick(appointment)}
-                        >
-                          <TableCell className="font-medium">
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-healthcare-primary" />
-                              {formatTime(appointment.appointment_time)}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {appointment.patients?.first_name} {appointment.patients?.last_name}
-                          </TableCell>
-                          <TableCell>
-                            <span className={cn(
-                              "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
-                              {
-                                "bg-blue-100 text-blue-800": appointment.status === "scheduled",
-                                "bg-green-100 text-green-800": appointment.status === "completed",
-                                "bg-red-100 text-red-800": appointment.status === "cancelled",
-                                "bg-yellow-100 text-yellow-800": appointment.status === "waiting",
-                                "bg-gray-300 text-gray-900": appointment.status === "no-show"
-                              }
-                            )}>
-                              {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
-                            </span>
-                          </TableCell>
-                          <TableCell className="max-w-[200px] truncate">
-                            {appointment.notes || "No notes"}
-                          </TableCell>
-                          <TableCell>
-                            <AppointmentActions appointment={appointment} refresh={refreshAppointments} />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                <AppointmentsTable
+                  appointments={appointments}
+                  onAppointmentClick={setSelectedAppointment}
+                  selectedAppointmentId={selectedAppointment?.id}
+                  refreshAppointments={refreshAppointments}
+                />
               ) : (
                 <div className="text-center py-8 border rounded-md p-6">
                   <p className="text-gray-500">No appointments scheduled for this day.</p>
@@ -336,7 +161,7 @@ export default function DoctorDashboard() {
                   </Button>
                 </div>
               )}
-            </CardContent>
+            </div>
           </Card>
         </div>
       </main>
