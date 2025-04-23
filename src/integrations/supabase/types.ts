@@ -15,9 +15,10 @@ export type Database = {
           appointment_time: string
           created_at: string | null
           doctor_id: string
+          guest_patient_id: string | null
           id: string
           notes: string | null
-          patient_id: string
+          patient_id: string | null
           status: string | null
         }
         Insert: {
@@ -25,9 +26,10 @@ export type Database = {
           appointment_time: string
           created_at?: string | null
           doctor_id: string
+          guest_patient_id?: string | null
           id?: string
           notes?: string | null
-          patient_id: string
+          patient_id?: string | null
           status?: string | null
         }
         Update: {
@@ -35,9 +37,10 @@ export type Database = {
           appointment_time?: string
           created_at?: string | null
           doctor_id?: string
+          guest_patient_id?: string | null
           id?: string
           notes?: string | null
-          patient_id?: string
+          patient_id?: string | null
           status?: string | null
         }
         Relationships: [
@@ -46,6 +49,13 @@ export type Database = {
             columns: ["doctor_id"]
             isOneToOne: false
             referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_guest_patient_id_fkey"
+            columns: ["guest_patient_id"]
+            isOneToOne: false
+            referencedRelation: "guest_patient"
             referencedColumns: ["id"]
           },
           {

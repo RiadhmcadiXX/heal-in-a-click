@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import {
   Dialog,
@@ -72,10 +71,7 @@ export function AddAppointmentModal({
     const formattedDate = date.toISOString().slice(0, 10);
 
     try {
-      let appointmentPatientId = "";
-      let isGuest = patientMode === "guest";
-
-      if (isGuest) {
+      if (patientMode === "guest") {
         if (!isGuestValid) {
           toast({
             variant: "destructive",
@@ -85,7 +81,7 @@ export function AddAppointmentModal({
           setLoading(false);
           return;
         }
-        // Insert guest patient and use its id
+        // Insert guest patient first
         const { data: guestData, error: guestError } = await supabase
           .from("guest_patient")
           .insert({
@@ -95,26 +91,46 @@ export function AddAppointmentModal({
           })
           .select("id")
           .single();
+
         if (guestError || !guestData) {
           throw guestError || new Error("Could not add guest patient");
         }
-        appointmentPatientId = guestData.id;
+
+        // Create appointment with guest_patient_id
+        const { error } = await supabase.from("appointments").insert({
+          doctor_id: doctorId,
+          guest_patient_id: guestData.id, // Use the guest_patient_id instead of patient_id
+          patient_id: null, // Set patient_id to null as we're using a guest
+          appointment_date: formattedDate,
+          appointment_time: slot,
+          status: "scheduled",
+        });
+
+        if (error) throw error;
       } else {
+        // Existing patient mode
         if (!patientId) {
+          toast({
+            variant: "destructive",
+            title: "Missing info",
+            description: "Please select a patient.",
+          });
           setLoading(false);
           return;
         }
-        appointmentPatientId = patientId;
-      }
 
-      const { error } = await supabase.from("appointments").insert({
-        doctor_id: doctorId,
-        patient_id: appointmentPatientId,
-        appointment_date: formattedDate,
-        appointment_time: slot,
-        status: "scheduled",
-      });
-      if (error) throw error;
+        // Create appointment with patient_id
+        const { error } = await supabase.from("appointments").insert({
+          doctor_id: doctorId,
+          patient_id: patientId,
+          guest_patient_id: null, // Set guest_patient_id to null as we're using a regular patient
+          appointment_date: formattedDate,
+          appointment_time: slot,
+          status: "scheduled",
+        });
+
+        if (error) throw error;
+      }
 
       toast({
         title: "Appointment created",
@@ -123,6 +139,7 @@ export function AddAppointmentModal({
       onOpenChange(false);
       onSuccess && onSuccess();
     } catch (err) {
+      console.error("Error creating appointment:", err);
       toast({
         variant: "destructive",
         title: "Error",
