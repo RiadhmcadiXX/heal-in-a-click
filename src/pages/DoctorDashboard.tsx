@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
@@ -52,7 +51,6 @@ export default function DoctorDashboard() {
     date
   );
 
-  // Get availabilities for selected day (fetch all slots for that doctor/date)
   const [daySlots, setDaySlots] = useState<{ time: string; status: "free" | "occupied" }[]>([]);
 
   useEffect(() => {
@@ -121,7 +119,6 @@ export default function DoctorDashboard() {
     }
   }, [loading, user, navigate]);
 
-  // NEW: Fetch slots/occupied for the selected date
   useEffect(() => {
     async function fetchSlots() {
       if (!doctor?.id) {
