@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { Plus, BarChart } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -28,10 +28,8 @@ const WORKING_HOURS = [
 ];
 
 function formatHourLabel(t: string) {
-  // "09:00:00" -> "09:00 AM", etc.
   const [h, m] = t.split(":");
   const date = new Date(2000, 1, 1, Number(h), Number(m), 0);
-  // Show 12-hour format
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
@@ -125,7 +123,6 @@ export default function DoctorDashboard() {
         setDaySlots([]);
         return;
       }
-      // Get all availabilities for this doctor/date
       const formattedDate = format(date, "yyyy-MM-dd");
       const { data: availableSlots } = await supabase
         .from("doctor_availabilities")
@@ -133,12 +130,10 @@ export default function DoctorDashboard() {
         .eq("doctor_id", doctor.id)
         .eq("available_date", formattedDate);
 
-      // All slots for the day (that doctor marked as available)
       const availSet = new Set(
         (availableSlots || []).map((a: any) => a.available_time)
       );
 
-      // Find which availabilities are already booked in appointments
       const { data: dayApts } = await supabase
         .from("appointments")
         .select("appointment_time")
@@ -150,7 +145,6 @@ export default function DoctorDashboard() {
         (dayApts || []).map((a: any) => a.appointment_time)
       );
 
-      // Union: all slots the doctor marked as available (use WORKING_HOURS if no availSet)
       let slots: { time: string; status: "free" | "occupied" }[] = [];
       let slotsToUse =
         availSet.size > 0 ? Array.from(availSet) : WORKING_HOURS;
@@ -214,15 +208,26 @@ export default function DoctorDashboard() {
                 <h2 className="text-lg font-semibold">
                   Appointments for {format(date, 'MMMM d, yyyy')}
                 </h2>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate('/availability')}
-                  className="flex items-center gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Manage Availability</span>
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate('/analytics')}
+                    className="flex items-center gap-2"
+                  >
+                    <BarChart className="h-4 w-4" />
+                    <span>View Analytics</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate('/availability')}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Manage Availability</span>
+                  </Button>
+                </div>
               </div>
 
               {loadingData ? (
