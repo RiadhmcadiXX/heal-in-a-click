@@ -121,76 +121,82 @@ export function WeeklyCalendarView({
         <div className="w-20"></div>
       </div>
 
-      <div className="flex w-full">
+      <div className="flex w-full h-[600px]">
         <div className="w-20 flex-shrink-0">
-          <div className="h-20"></div>
-          {timeSlots.map((slot, index) => (
-            <div 
-              key={index} 
-              className="h-20 border-t border-gray-200 text-xs text-gray-500 pr-2 text-right"
-            >
-              {slot.label}
-            </div>
-          ))}
+          <div className="h-20 bg-white sticky top-0 z-10"></div>
+          <div className="overflow-y-auto">
+            {timeSlots.map((slot, index) => (
+              <div 
+                key={index} 
+                className="h-20 border-t border-gray-200 text-xs text-gray-500 pr-2 text-right"
+              >
+                {slot.label}
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="flex-grow grid grid-cols-5 overflow-auto">
-          {weekDays.map((day, dayIndex) => (
-            <div 
-              key={dayIndex} 
-              className={cn(
-                "h-20 border-b border-l border-gray-200 text-center p-2",
-                isSameDay(day, selectedDate) && "bg-gray-50"
-              )}
-            >
-              <div className="uppercase text-sm text-gray-500">
-                {format(day, 'EEE')}
-              </div>
-              <Button 
-                variant="ghost"
+        <div className="flex-grow overflow-hidden">
+          <div className="grid grid-cols-5 sticky top-0 z-10 bg-white">
+            {weekDays.map((day, dayIndex) => (
+              <div 
+                key={dayIndex} 
                 className={cn(
-                  "h-12 w-12 rounded-full p-0 font-semibold text-xl",
-                  isSameDay(day, selectedDate) && "bg-healthcare-primary text-white hover:bg-healthcare-primary/90"
+                  "h-20 border-b border-l border-gray-200 text-center p-2",
+                  isSameDay(day, selectedDate) && "bg-gray-50"
                 )}
-                onClick={() => onDateChange(day)}
               >
-                {format(day, 'd')}
-              </Button>
-            </div>
-          ))}
-
-          {weekDays.map((day, dayIndex) => (
-            <div key={dayIndex} className="relative">
-              {timeSlots.map((_, slotIndex) => (
-                <div 
-                  key={slotIndex} 
-                  className={cn(
-                    "h-20 border-t border-l border-gray-200",
-                    isSameDay(day, selectedDate) && "bg-gray-50"
-                  )}
-                ></div>
-              ))}
-
-              {getAppointmentsForDay(day).map((appointment, index) => (
-                <div
-                  key={appointment.id}
-                  className="absolute left-1 right-1 bg-healthcare-primary/90 text-white p-2 rounded-md overflow-hidden cursor-pointer hover:bg-healthcare-primary transition-colors"
-                  style={getAppointmentStyles(
-                    appointment.startTime.split(' ')[0], 
-                    appointment.endTime?.split(' ')[0]
-                  )}
-                  onClick={() => onAppointmentClick(appointment)}
-                >
-                  <div className="font-medium text-sm truncate">
-                    {formatTime(appointment.startTime.split(' ')[0])}
-                  </div>
-                  <div className="font-medium text-sm truncate">
-                    {appointment.patientName}
-                  </div>
+                <div className="uppercase text-sm text-gray-500">
+                  {format(day, 'EEE')}
                 </div>
-              ))}
-            </div>
-          ))}
+                <Button 
+                  variant="ghost"
+                  className={cn(
+                    "h-12 w-12 rounded-full p-0 font-semibold text-xl",
+                    isSameDay(day, selectedDate) && "bg-healthcare-primary text-white hover:bg-healthcare-primary/90"
+                  )}
+                  onClick={() => onDateChange(day)}
+                >
+                  {format(day, 'd')}
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-5 overflow-y-auto" style={{ height: "calc(600px - 5rem)" }}>
+            {weekDays.map((day, dayIndex) => (
+              <div key={dayIndex} className="relative">
+                {timeSlots.map((_, slotIndex) => (
+                  <div 
+                    key={slotIndex} 
+                    className={cn(
+                      "h-20 border-t border-l border-gray-200",
+                      isSameDay(day, selectedDate) && "bg-gray-50"
+                    )}
+                  ></div>
+                ))}
+
+                {getAppointmentsForDay(day).map((appointment, index) => (
+                  <div
+                    key={appointment.id}
+                    className="absolute left-1 right-1 bg-healthcare-primary/90 text-white p-2 rounded-md overflow-hidden cursor-pointer hover:bg-healthcare-primary transition-colors"
+                    style={getAppointmentStyles(
+                      appointment.startTime.split(' ')[0], 
+                      appointment.endTime?.split(' ')[0]
+                    )}
+                    onClick={() => onAppointmentClick(appointment)}
+                  >
+                    <div className="font-medium text-sm truncate">
+                      {formatTime(appointment.startTime.split(' ')[0])}
+                    </div>
+                    <div className="font-medium text-sm truncate">
+                      {appointment.patientName}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
