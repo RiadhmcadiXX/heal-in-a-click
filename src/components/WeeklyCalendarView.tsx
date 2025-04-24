@@ -1,24 +1,14 @@
-
 import { useState, useEffect } from "react";
 import { format, addDays, startOfWeek, isSameDay, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-interface Appointment {
-  id: string;
-  title: string;
-  patientName: string;
-  startTime: string;
-  endTime: string;
-  date: string;
-  status: string;
-}
+import { FormattedAppointment } from "@/hooks/useWeeklyCalendarAdapter";
 
 interface WeeklyCalendarViewProps {
-  appointments: Appointment[];
-  onAppointmentClick: (appointment: Appointment) => void;
+  appointments: FormattedAppointment[];
+  onAppointmentClick: (appointment: FormattedAppointment) => void;
   selectedDate: Date;
   onDateChange: (date: Date) => void;
 }
@@ -31,7 +21,6 @@ export function WeeklyCalendarView({
 }: WeeklyCalendarViewProps) {
   const [weekStart, setWeekStart] = useState<Date>(startOfWeek(selectedDate));
   
-  // Update week start when selected date changes
   useEffect(() => {
     setWeekStart(startOfWeek(selectedDate));
   }, [selectedDate]);
@@ -54,33 +43,29 @@ export function WeeklyCalendarView({
     onDateChange(today);
   };
 
-  // Generate days for the week
   const weekDays = Array.from({ length: 5 }).map((_, index) => {
     return addDays(weekStart, index);
   });
 
-  // Generate time slots from 7 AM to 8 PM
   const timeSlots = Array.from({ length: 14 }).map((_, index) => {
-    const hour = index + 7; // Start from 7 AM
+    const hour = index + 7;
     return {
       hour,
       label: `${hour > 12 ? hour - 12 : hour}:00 ${hour >= 12 ? 'PM' : 'AM'}`
     };
   });
 
-  // Format appointment time for display
   const formatTime = (timeString: string) => {
     const [hours, minutes] = timeString.split(':');
     const hour = parseInt(hours);
     return `${hour > 12 ? hour - 12 : hour}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
   };
 
-  // Calculate position and height for appointment display
   const getAppointmentStyles = (startTime: string, endTime?: string) => {
     const [startHour, startMinute] = startTime.split(':').map(Number);
     const startPosition = (startHour - 7) * 60 + startMinute;
     
-    let height = 60; // Default height for 1-hour appointment
+    let height = 60;
     if (endTime) {
       const [endHour, endMinute] = endTime.split(':').map(Number);
       const endPosition = (endHour - 7) * 60 + endMinute;
@@ -90,11 +75,10 @@ export function WeeklyCalendarView({
     return {
       top: `${startPosition}px`,
       height: `${height}px`,
-      minHeight: '60px', // Minimum height for very short appointments
+      minHeight: '60px',
     };
   };
 
-  // Get appointments for a specific day
   const getAppointmentsForDay = (day: Date) => {
     const formattedDay = format(day, 'yyyy-MM-dd');
     return appointments.filter(apt => apt.date === formattedDay);
@@ -134,13 +118,12 @@ export function WeeklyCalendarView({
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        <div className="w-20"></div> {/* Empty div for spacing */}
+        <div className="w-20"></div>
       </div>
 
       <div className="flex w-full">
-        {/* Time column */}
         <div className="w-20 flex-shrink-0">
-          <div className="h-20"></div> {/* Empty space for header alignment */}
+          <div className="h-20"></div>
           {timeSlots.map((slot, index) => (
             <div 
               key={index} 
@@ -151,9 +134,7 @@ export function WeeklyCalendarView({
           ))}
         </div>
 
-        {/* Days columns */}
         <div className="flex-grow grid grid-cols-5 overflow-auto">
-          {/* Headers */}
           {weekDays.map((day, dayIndex) => (
             <div 
               key={dayIndex} 
@@ -178,10 +159,8 @@ export function WeeklyCalendarView({
             </div>
           ))}
 
-          {/* Time slots grid */}
           {weekDays.map((day, dayIndex) => (
             <div key={dayIndex} className="relative">
-              {/* Time slot background */}
               {timeSlots.map((_, slotIndex) => (
                 <div 
                   key={slotIndex} 
@@ -192,7 +171,6 @@ export function WeeklyCalendarView({
                 ></div>
               ))}
 
-              {/* Appointments for this day */}
               {getAppointmentsForDay(day).map((appointment, index) => (
                 <div
                   key={appointment.id}

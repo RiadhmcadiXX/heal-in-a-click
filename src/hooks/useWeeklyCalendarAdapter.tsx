@@ -15,7 +15,19 @@ interface AppointmentData {
   notes?: string;
 }
 
-export function useWeeklyCalendarAdapter(appointments: AppointmentData[]) {
+export interface FormattedAppointment {
+  id: string;
+  title: string;
+  patientName: string;
+  startTime: string;
+  endTime: string;
+  date: string;
+  status: string;
+  notes?: string;
+  originalData: AppointmentData;
+}
+
+export function useWeeklyCalendarAdapter(appointments: AppointmentData[]): FormattedAppointment[] {
   const formattedAppointments = useMemo(() => {
     return appointments.map(appointment => {
       // Calculate end time (assuming 1 hour duration)

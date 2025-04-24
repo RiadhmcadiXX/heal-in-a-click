@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, BarChart, Calendar as CalendarIcon } from "lucide-react";
@@ -172,6 +171,13 @@ export default function DoctorDashboard() {
     return monthAppointments.some(apt => apt.appointment_date === formattedDay);
   };
 
+  const selectedDayAppointments = useMemo(() => {
+    if (!appointments || appointments.length === 0) return [];
+    
+    const formattedSelectedDate = format(date, 'yyyy-MM-dd');
+    return appointments.filter(apt => apt.appointment_date === formattedSelectedDate);
+  }, [appointments, date]);
+
   if (loading || !user) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
@@ -273,9 +279,9 @@ export default function DoctorDashboard() {
 
               {loadingData ? (
                 <div className="text-center py-8">Loading appointments...</div>
-              ) : appointments.length > 0 ? (
+              ) : selectedDayAppointments.length > 0 ? (
                 <AppointmentsTable
-                  appointments={appointments}
+                  appointments={selectedDayAppointments}
                   onAppointmentClick={setSelectedAppointment}
                   selectedAppointmentId={selectedAppointment?.id}
                   refreshAppointments={refreshAppointments}
