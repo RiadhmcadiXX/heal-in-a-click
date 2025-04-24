@@ -64,16 +64,22 @@ export function useDoctorAnalytics(doctorId: string | undefined) {
       try {
         const { data, error } = await supabase
           .from('appointments')
-          .select('status, count')
-          .eq('doctor_id', doctorId)
-          .group('status');
+          .select('status')
+          .eq('doctor_id', doctorId);
         
         if (error) throw error;
         
+        // Group data by status and count
+        const statusCounts: Record<string, number> = {};
+        data.forEach(item => {
+          const status = item.status || 'Pending';
+          statusCounts[status] = (statusCounts[status] || 0) + 1;
+        });
+        
         // Transform data for the pie chart
-        const formattedData = data.map(item => ({
-          name: item.status || 'Pending',
-          value: item.count,
+        const formattedData = Object.entries(statusCounts).map(([name, count]) => ({
+          name,
+          value: count,
         }));
         
         setStatusDistribution(formattedData);

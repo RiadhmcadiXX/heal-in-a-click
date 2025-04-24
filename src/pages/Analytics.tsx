@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useDoctorAnalytics } from "@/hooks/useDoctorAnalytics";
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart, LineChart, PieChart } from "lucide-react";
 import {
@@ -38,19 +39,12 @@ export default function Analytics() {
   const [doctor, setDoctor] = useState<any>(null);
   const [dateRange, setDateRange] = useState<"week" | "month" | "year">("month");
   
-  // Analytics data states
-  const [appointmentsData, setAppointmentsData] = useState<any[]>([]);
-  const [patientsCount, setPatientsCount] = useState<number>(0);
-  const [statusDistribution, setStatusDistribution] = useState<any[]>([]);
-  const [appointmentHistory, setAppointmentHistory] = useState<any[]>([]);
-  const [topPatients, setTopPatients] = useState<any[]>([]);
-  const [loading1, setLoading1] = useState(true);
-  const [loading2, setLoading2] = useState(true);
+  // Use the analytics hook to fetch core metrics
   const [loading3, setLoading3] = useState(true);
   const [loading4, setLoading4] = useState(true);
+  const [appointmentHistory, setAppointmentHistory] = useState<any[]>([]);
+  const [topPatients, setTopPatients] = useState<any[]>([]);
   
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
-
   useEffect(() => {
     async function fetchDoctorData() {
       if (!user) return;
@@ -81,83 +75,16 @@ export default function Analytics() {
       navigate('/login');
     }
   }, [user, loading, navigate, toast]);
-
-  // Fetch total unique patients
-  useEffect(() => {
-    async function fetchUniquePatients() {
-      if (!doctor?.id) return;
-      
-      setLoading1(true);
-      try {
-        // Count unique patients
-        const { data, error } = await supabase
-          .from('appointments')
-          .select('patient_id, guest_patient_id')
-          .eq('doctor_id', doctor.id);
-        
-        if (error) throw error;
-        
-        // Count unique patient IDs (excluding nulls)
-        const uniquePatientIds = new Set();
-        const uniqueGuestPatientIds = new Set();
-        
-        data.forEach(appointment => {
-          if (appointment.patient_id) uniquePatientIds.add(appointment.patient_id);
-          if (appointment.guest_patient_id) uniqueGuestPatientIds.add(appointment.guest_patient_id);
-        });
-        
-        setPatientsCount(uniquePatientIds.size + uniqueGuestPatientIds.size);
-      } catch (error: any) {
-        console.error("Error fetching unique patients:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to fetch patient analytics",
-        });
-      } finally {
-        setLoading1(false);
-      }
-    }
-    
-    fetchUniquePatients();
-  }, [doctor?.id, toast]);
-
-  // Fetch appointment status distribution
-  useEffect(() => {
-    async function fetchStatusDistribution() {
-      if (!doctor?.id) return;
-      
-      setLoading2(true);
-      try {
-        const { data, error } = await supabase
-          .from('appointments')
-          .select('status, count')
-          .eq('doctor_id', doctor.id)
-          .group('status');
-        
-        if (error) throw error;
-        
-        // Transform data for the pie chart
-        const formattedData = data.map(item => ({
-          name: item.status || 'Pending',
-          value: item.count,
-        }));
-        
-        setStatusDistribution(formattedData);
-      } catch (error: any) {
-        console.error("Error fetching status distribution:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to fetch appointment status analytics",
-        });
-      } finally {
-        setLoading2(false);
-      }
-    }
-    
-    fetchStatusDistribution();
-  }, [doctor?.id, toast]);
+  
+  // Use the doctor analytics hook
+  const { 
+    appointmentsData, 
+    patientsCount, 
+    statusDistribution, 
+    loading: analyticsLoading,
+    totalAppointments, 
+    avgMonthlyAppointments 
+  } = useDoctorAnalytics(doctor?.id);
 
   // Fetch appointment history based on date range
   useEffect(() => {
@@ -166,21 +93,6 @@ export default function Analytics() {
       
       setLoading3(true);
       try {
-        let interval;
-        let format_pattern;
-        
-        // Set appropriate interval and format pattern based on date range
-        if (dateRange === 'week') {
-          interval = '1 day';
-          format_pattern = 'YYYY-MM-DD';
-        } else if (dateRange === 'month') {
-          interval = '1 day';
-          format_pattern = 'YYYY-MM-DD';
-        } else { // year
-          interval = '1 month';
-          format_pattern = 'YYYY-MM';
-        }
-        
         // Get current date
         const today = new Date();
         let startDate;
@@ -202,19 +114,25 @@ export default function Analytics() {
         // Fetch appointments within date range
         const { data, error } = await supabase
           .from('appointments')
-          .select('appointment_date, count')
+          .select('appointment_date')
           .eq('doctor_id', doctor.id)
           .gte('appointment_date', formattedStartDate)
-          .lte('appointment_date', formattedEndDate)
-          .group('appointment_date')
-          .order('appointment_date');
+          .lte('appointment_date', formattedEndDate);
         
         if (error) throw error;
         
-        // Transform data for the line chart
-        const formattedData = data.map((item: any) => ({
-          date: item.appointment_date,
-          appointments: item.count,
+        // Group appointments by date and count
+        const appointmentsByDate: Record<string, number> = {};
+        
+        data.forEach(appointment => {
+          const date = appointment.appointment_date;
+          appointmentsByDate[date] = (appointmentsByDate[date] || 0) + 1;
+        });
+        
+        // Transform to array format for the chart
+        const formattedData = Object.entries(appointmentsByDate).map(([date, count]) => ({
+          date,
+          appointments: count,
         }));
         
         setAppointmentHistory(formattedData);
@@ -240,19 +158,15 @@ export default function Analytics() {
       
       setLoading4(true);
       try {
-        // This query is a bit more complex - we need to join with patients table
+        // Fetch all appointments with patient info
         const { data: patientAppointments, error: patientError } = await supabase
           .from('appointments')
           .select(`
             patient_id,
-            patients (first_name, last_name),
-            count
+            patients (first_name, last_name)
           `)
           .eq('doctor_id', doctor.id)
-          .not('patient_id', 'is', null)
-          .group('patient_id, patients.first_name, patients.last_name')
-          .order('count', { ascending: false })
-          .limit(5);
+          .not('patient_id', 'is', null);
         
         if (patientError) throw patientError;
         
@@ -261,29 +175,55 @@ export default function Analytics() {
           .from('appointments')
           .select(`
             guest_patient_id,
-            guest_patient (first_name, last_name),
-            count
+            guest_patient (first_name, last_name)
           `)
           .eq('doctor_id', doctor.id)
-          .not('guest_patient_id', 'is', null)
-          .group('guest_patient_id, guest_patient.first_name, guest_patient.last_name')
-          .order('count', { ascending: false })
-          .limit(5);
+          .not('guest_patient_id', 'is', null);
         
         if (guestError) throw guestError;
         
-        // Combine and format data
-        const patientData = (patientAppointments || []).map(item => ({
-          id: item.patient_id,
-          name: `${item.patients.first_name} ${item.patients.last_name}`,
-          appointments: item.count,
+        // Manual counting for patient appointments
+        const patientCountMap: Record<string, { count: number, name: string }> = {};
+        patientAppointments?.forEach(item => {
+          if (item.patient_id) {
+            const id = item.patient_id;
+            if (!patientCountMap[id]) {
+              patientCountMap[id] = { 
+                count: 0, 
+                name: `${item.patients.first_name} ${item.patients.last_name}` 
+              };
+            }
+            patientCountMap[id].count++;
+          }
+        });
+        
+        // Manual counting for guest patient appointments
+        const guestCountMap: Record<string, { count: number, name: string }> = {};
+        guestAppointments?.forEach(item => {
+          if (item.guest_patient_id) {
+            const id = item.guest_patient_id;
+            if (!guestCountMap[id]) {
+              guestCountMap[id] = { 
+                count: 0, 
+                name: `${item.guest_patient.first_name} ${item.guest_patient.last_name}` 
+              };
+            }
+            guestCountMap[id].count++;
+          }
+        });
+        
+        // Convert to arrays
+        const patientData = Object.entries(patientCountMap).map(([id, data]) => ({
+          id,
+          name: data.name,
+          appointments: data.count,
           isGuest: false
         }));
         
-        const guestData = (guestAppointments || []).map(item => ({
-          id: item.guest_patient_id,
-          name: `${item.guest_patient.first_name} ${item.guest_patient.last_name}`,
-          appointments: item.count,
+        const guestData = Object.entries(guestCountMap).map(([id, data]) => ({
+          id,
+          name: data.name,
+          appointments: data.count,
           isGuest: true
         }));
         
@@ -308,69 +248,15 @@ export default function Analytics() {
     fetchTopPatients();
   }, [doctor?.id, toast]);
 
-  // Fetch total appointments by month
-  useEffect(() => {
-    async function fetchMonthlyAppointments() {
-      if (!doctor?.id) return;
-      
-      try {
-        // Get current date and date from 6 months ago
-        const today = new Date();
-        const sixMonthsAgo = new Date(today);
-        sixMonthsAgo.setMonth(today.getMonth() - 6);
-        
-        const formattedStartDate = format(sixMonthsAgo, 'yyyy-MM-dd');
-        const formattedEndDate = format(today, 'yyyy-MM-dd');
-        
-        const { data, error } = await supabase
-          .from('appointments')
-          .select('appointment_date')
-          .eq('doctor_id', doctor.id)
-          .gte('appointment_date', formattedStartDate)
-          .lte('appointment_date', formattedEndDate);
-        
-        if (error) throw error;
-        
-        // Group appointments by month
-        const monthlyData: Record<string, number> = {};
-        
-        data.forEach(appointment => {
-          const month = appointment.appointment_date.substring(0, 7); // YYYY-MM format
-          monthlyData[month] = (monthlyData[month] || 0) + 1;
-        });
-        
-        // Convert to array format for the bar chart
-        const formattedData = Object.entries(monthlyData).map(([month, count]) => ({
-          month,
-          appointments: count,
-          // Format month name (e.g., "2023-01" to "Jan 2023")
-          name: format(new Date(month + '-01'), 'MMM yyyy')
-        }));
-        
-        setAppointmentsData(formattedData);
-      } catch (error: any) {
-        console.error("Error fetching monthly appointments:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to fetch appointment analytics",
-        });
-      }
-    }
-    
-    fetchMonthlyAppointments();
-  }, [doctor?.id, toast]);
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
+  // Fixed chart config to match the expected type
   const chartConfig = {
-    status: {
-      Completed: { label: "Completed", color: "#10b981" },
-      Cancelled: { label: "Cancelled", color: "#ef4444" },
-      Pending: { label: "Pending", color: "#f59e0b" },
-      Rescheduled: { label: "Rescheduled", color: "#3b82f6" }
-    },
-    appointments: {
-      appointments: { label: "Appointments", color: "#3b82f6" }
-    }
+    "completed": { label: "Completed", color: "#10b981" },
+    "cancelled": { label: "Cancelled", color: "#ef4444" },
+    "pending": { label: "Pending", color: "#f59e0b" },
+    "rescheduled": { label: "Rescheduled", color: "#3b82f6" },
+    "appointments": { label: "Appointments", color: "#3b82f6" }
   };
 
   if (loading || !user) {
@@ -401,7 +287,7 @@ export default function Analytics() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
-                {loading1 ? 'Loading...' : patientsCount}
+                {analyticsLoading.patients ? 'Loading...' : patientsCount}
               </div>
             </CardContent>
           </Card>
@@ -414,7 +300,7 @@ export default function Analytics() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
-                {appointmentsData.reduce((sum, item) => sum + item.appointments, 0)}
+                {totalAppointments}
               </div>
             </CardContent>
           </Card>
@@ -427,10 +313,7 @@ export default function Analytics() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
-                {appointmentsData.length > 0 
-                  ? Math.round(appointmentsData.reduce((sum, item) => sum + item.appointments, 0) / appointmentsData.length) 
-                  : 0
-                }
+                {avgMonthlyAppointments}
               </div>
             </CardContent>
           </Card>
@@ -486,7 +369,7 @@ export default function Analytics() {
                   <CardDescription>Distribution by status</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-2">
-                  {loading2 ? (
+                  {analyticsLoading.status ? (
                     <div className="flex items-center justify-center h-64">Loading...</div>
                   ) : (
                     <div className="h-80">
