@@ -1,6 +1,7 @@
+
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, BarChart } from "lucide-react";
+import { Plus, BarChart, Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,6 +15,8 @@ import { AppointmentsTable } from "@/components/AppointmentsTable";
 import { useDoctorAppointments } from "@/hooks/useDoctorAppointments";
 import { DayAvailabilitySidebar } from "@/components/DayAvailabilitySidebar";
 import { AddAppointmentModal } from "@/components/AddAppointmentModal";
+import { WeeklyCalendarView } from "@/components/WeeklyCalendarView";
+import { useWeeklyCalendarAdapter } from "@/hooks/useWeeklyCalendarAdapter";
 
 const WORKING_HOURS = [
   "09:00:00",
@@ -41,13 +44,17 @@ export default function DoctorDashboard() {
   const [date, setDate] = useState<Date>(new Date());
   const [monthAppointments, setMonthAppointments] = useState<any[]>([]);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+  const [viewMode, setViewMode] = useState<"day" | "week">("day");
 
   const [showAddModal, setShowAddModal] = useState(false);
 
   const { appointments, loading: loadingData, refreshAppointments } = useDoctorAppointments(
     doctor?.id,
-    date
+    date,
+    viewMode
   );
+
+  const formattedWeeklyAppointments = useWeeklyCalendarAdapter(appointments);
 
   const [daySlots, setDaySlots] = useState<{ time: string; status: "free" | "occupied" }[]>([]);
 
@@ -182,24 +189,58 @@ export default function DoctorDashboard() {
           </div>
         )}
 
-        <div className="flex flex-col md:flex-row gap-6 items-start">
-          <DayAvailabilitySidebar
-            slots={daySlots.map((s) => ({
-              time: formatHourLabel(s.time),
-              status: s.status,
-            }))}
-            onAddAppointmentClick={() => setShowAddModal(true)}
-            onSlotClick={undefined}
-          />
-
-          <div className="flex-1 w-full md:max-w-xl">
-            <MonthlyCalendar
-              date={date}
-              onDateSelect={(newDate) => newDate && setDate(newDate)}
-              hasAppointmentOnDate={hasAppointmentOnDate}
-            />
+        <div className="flex justify-end mb-4">
+          <div className="flex rounded-md">
+            <Button
+              variant={viewMode === "day" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode("day")}
+              className="rounded-l-md rounded-r-none"
+            >
+              Day View
+            </Button>
+            <Button
+              variant={viewMode === "week" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode("week")}
+              className="rounded-r-md rounded-l-none"
+            >
+              Week View
+            </Button>
           </div>
         </div>
+
+        {viewMode === "day" ? (
+          <div className="flex flex-col md:flex-row gap-6 items-start">
+            <DayAvailabilitySidebar
+              slots={daySlots.map((s) => ({
+                time: formatHourLabel(s.time),
+                status: s.status,
+              }))}
+              onAddAppointmentClick={() => setShowAddModal(true)}
+              onSlotClick={undefined}
+            />
+
+            <div className="flex-1 w-full md:max-w-xl">
+              <MonthlyCalendar
+                date={date}
+                onDateSelect={(newDate) => newDate && setDate(newDate)}
+                hasAppointmentOnDate={hasAppointmentOnDate}
+              />
+            </div>
+          </div>
+        ) : (
+          <Card className="p-6">
+            <WeeklyCalendarView
+              appointments={formattedWeeklyAppointments}
+              onAppointmentClick={(apt) => {
+                setSelectedAppointment(apt.originalData);
+              }}
+              selectedDate={date}
+              onDateChange={setDate}
+            />
+          </Card>
+        )}
 
         <div className="mt-8">
           <Card>

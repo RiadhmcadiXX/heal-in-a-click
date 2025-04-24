@@ -1,10 +1,14 @@
 
 import { useState, useEffect } from "react";
-import { format } from "date-fns";
+import { format, addDays, startOfWeek, endOfWeek } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-export function useDoctorAppointments(doctorId: string | undefined, selectedDate: Date) {
+export function useDoctorAppointments(
+  doctorId: string | undefined, 
+  selectedDate: Date,
+  viewMode: "day" | "week" = "day"
+) {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -15,17 +19,32 @@ export function useDoctorAppointments(doctorId: string | undefined, selectedDate
     setLoading(true);
     
     try {
-      const formattedDate = format(selectedDate, 'yyyy-MM-dd');
-      
-      const { data, error } = await supabase
+      let query = supabase
         .from('appointments')
         .select(`
           *,
           patients(first_name, last_name)
         `)
-        .eq('doctor_id', doctorId)
-        .eq('appointment_date', formattedDate)
-        .order('appointment_time', { ascending: true });
+        .eq('doctor_id', doctorId);
+      
+      if (viewMode === "day") {
+        // For day view, only fetch appointments for the selected date
+        const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+        query = query.eq('appointment_date', formattedDate);
+      } else {
+        // For week view, fetch appointments for the entire week
+        const weekStart = startOfWeek(selectedDate);
+        const weekEnd = endOfWeek(selectedDate);
+        
+        const formattedStartDate = format(weekStart, 'yyyy-MM-dd');
+        const formattedEndDate = format(weekEnd, 'yyyy-MM-dd');
+        
+        query = query
+          .gte('appointment_date', formattedStartDate)
+          .lte('appointment_date', formattedEndDate);
+      }
+      
+      const { data, error } = await query.order('appointment_time', { ascending: true });
       
       if (error) throw error;
       
@@ -69,7 +88,7 @@ export function useDoctorAppointments(doctorId: string | undefined, selectedDate
           if (appointmentData) {
             toast({
               title: "New Appointment",
-              description: `${appointmentData.patients.first_name} ${appointmentData.patients.last_name} booked for ${format(new Date(appointmentData.appointment_date), 'MMMM d, yyyy')} at ${format(new Date(`2000-01-01T${appointmentData.appointment_time}`), 'h:mm a')}`,
+              description: `${appointmentData.patients?.first_name || 'Guest'} ${appointmentData.patients?.last_name || 'Patient'} booked for ${format(new Date(appointmentData.appointment_date), 'MMMM d, yyyy')} at ${format(new Date(`2000-01-01T${appointmentData.appointment_time}`), 'h:mm a')}`,
             });
             fetchAppointments();
           }
@@ -84,7 +103,7 @@ export function useDoctorAppointments(doctorId: string | undefined, selectedDate
 
   useEffect(() => {
     fetchAppointments();
-  }, [doctorId, selectedDate]);
+  }, [doctorId, selectedDate, viewMode]);
 
   return { appointments, loading, refreshAppointments: fetchAppointments };
 }
