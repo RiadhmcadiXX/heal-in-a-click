@@ -10,6 +10,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Patient {
   id: string;
@@ -38,22 +40,22 @@ export function AddAppointmentModal({
   const [patients, setPatients] = useState<Patient[]>([]);
   const [slot, setSlot] = useState("");
   const [patientId, setPatientId] = useState("");
-  const [patientMode, setPatientMode] = useState<"existing" | "guest">("existing");
-  // Guest fields:
-  const [guestFirstName, setGuestFirstName] = useState("");
-  const [guestLastName, setGuestLastName] = useState("");
-  const [guestPhone, setGuestPhone] = useState("");
+  const [patientMode, setPatientMode] = useState<"existing" | "new">("existing");
+  
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setSlot("");
     setPatientId("");
-    setGuestFirstName("");
-    setGuestLastName("");
-    setGuestPhone("");
+    setFirstName("");
+    setLastName("");
+    setPhone("");
     setPatientMode("existing");
-    // Fetch patients
+    
     supabase
       .from("patients")
       .select("id, first_name, last_name")
@@ -62,7 +64,7 @@ export function AddAppointmentModal({
       });
   }, [open]);
 
-  const isGuestValid = guestFirstName.trim() !== "" && guestLastName.trim() !== "";
+  const isNewPatientValid = firstName.trim() !== "" && lastName.trim() !== "";
 
   const handleCreate = async () => {
     if (!slot) return;
@@ -71,36 +73,35 @@ export function AddAppointmentModal({
     const formattedDate = date.toISOString().slice(0, 10);
 
     try {
-      if (patientMode === "guest") {
-        if (!isGuestValid) {
+      if (patientMode === "new") {
+        if (!isNewPatientValid) {
           toast({
             variant: "destructive",
             title: "Missing info",
-            description: "Guest first and last name are required.",
+            description: "First and last name are required.",
           });
           setLoading(false);
           return;
         }
-        // Insert guest patient first
-        const { data: guestData, error: guestError } = await supabase
-          .from("guest_patient")
+        const { data: newPatient, error: patientError } = await supabase
+          .from("patients")
           .insert({
-            first_name: guestFirstName,
-            last_name: guestLastName,
-            phone: guestPhone,
+            first_name: firstName,
+            last_name: lastName,
+            phone: phone,
+            user_id: null
           })
           .select("id")
           .single();
 
-        if (guestError || !guestData) {
-          throw guestError || new Error("Could not add guest patient");
+        if (patientError || !newPatient) {
+          throw patientError || new Error("Could not create patient");
         }
 
-        // Create appointment with guest_patient_id
         const { error } = await supabase.from("appointments").insert({
           doctor_id: doctorId,
-          guest_patient_id: guestData.id, // Use the guest_patient_id instead of patient_id
-          patient_id: null, // Set patient_id to null as we're using a guest
+          patient_id: newPatient.id,
+          guest_patient_id: null,
           appointment_date: formattedDate,
           appointment_time: slot,
           status: "scheduled",
@@ -108,7 +109,6 @@ export function AddAppointmentModal({
 
         if (error) throw error;
       } else {
-        // Existing patient mode
         if (!patientId) {
           toast({
             variant: "destructive",
@@ -119,11 +119,10 @@ export function AddAppointmentModal({
           return;
         }
 
-        // Create appointment with patient_id
         const { error } = await supabase.from("appointments").insert({
           doctor_id: doctorId,
           patient_id: patientId,
-          guest_patient_id: null, // Set guest_patient_id to null as we're using a regular patient
+          guest_patient_id: null,
           appointment_date: formattedDate,
           appointment_time: slot,
           status: "scheduled",
@@ -158,7 +157,7 @@ export function AddAppointmentModal({
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div>
-            <label className="block mb-1 text-sm font-medium">Time Slot</label>
+            <Label className="block mb-1">Time Slot</Label>
             <select
               value={slot}
               onChange={(e) => setSlot(e.target.value)}
@@ -174,7 +173,7 @@ export function AddAppointmentModal({
             </select>
           </div>
           <div>
-            <label className="block mb-1 text-sm font-medium">Patient Type</label>
+            <Label className="block mb-1">Patient Type</Label>
             <div className="flex items-center gap-6">
               <label className="flex items-center gap-1 text-sm">
                 <input
@@ -189,18 +188,18 @@ export function AddAppointmentModal({
               <label className="flex items-center gap-1 text-sm">
                 <input
                   type="radio"
-                  value="guest"
-                  checked={patientMode === "guest"}
-                  onChange={() => setPatientMode("guest")}
+                  value="new"
+                  checked={patientMode === "new"}
+                  onChange={() => setPatientMode("new")}
                   disabled={loading}
                 />
-                Guest Patient
+                New Patient
               </label>
             </div>
           </div>
           {patientMode === "existing" && (
             <div>
-              <label className="block mb-1 text-sm font-medium">Select Patient</label>
+              <Label className="block mb-1">Select Patient</Label>
               <select
                 value={patientId}
                 onChange={(e) => setPatientId(e.target.value)}
@@ -216,37 +215,34 @@ export function AddAppointmentModal({
               </select>
             </div>
           )}
-          {patientMode === "guest" && (
+          {patientMode === "new" && (
             <div className="space-y-2">
               <div>
-                <label className="block text-sm mb-1">Guest First Name<span className="text-red-500">*</span></label>
-                <input
+                <Label>First Name<span className="text-red-500">*</span></Label>
+                <Input
                   type="text"
-                  className="w-full border rounded p-2"
-                  value={guestFirstName}
-                  onChange={(e) => setGuestFirstName(e.target.value)}
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
                   disabled={loading}
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm mb-1">Guest Last Name<span className="text-red-500">*</span></label>
-                <input
+                <Label>Last Name<span className="text-red-500">*</span></Label>
+                <Input
                   type="text"
-                  className="w-full border rounded p-2"
-                  value={guestLastName}
-                  onChange={(e) => setGuestLastName(e.target.value)}
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
                   disabled={loading}
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm mb-1">Guest Phone</label>
-                <input
+                <Label>Phone</Label>
+                <Input
                   type="tel"
-                  className="w-full border rounded p-2"
-                  value={guestPhone}
-                  onChange={(e) => setGuestPhone(e.target.value)}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                   disabled={loading}
                 />
               </div>
@@ -261,7 +257,7 @@ export function AddAppointmentModal({
               loading ||
               (patientMode === "existing"
                 ? !patientId
-                : !isGuestValid)
+                : !isNewPatientValid)
             }
           >
             {loading ? "Creating..." : "Create Appointment"}

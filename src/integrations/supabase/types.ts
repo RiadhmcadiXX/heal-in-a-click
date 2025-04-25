@@ -229,7 +229,7 @@ export type Database = {
           id: string
           last_name: string
           phone: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -237,7 +237,7 @@ export type Database = {
           id?: string
           last_name: string
           phone?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -245,7 +245,7 @@ export type Database = {
           id?: string
           last_name?: string
           phone?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -275,6 +275,48 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      reviews: {
+        Row: {
+          created_at: string | null
+          doctor_id: string | null
+          id: string
+          patient_id: string | null
+          rating: number | null
+          review_text: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          doctor_id?: string | null
+          id?: string
+          patient_id?: string | null
+          rating?: number | null
+          review_text?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          doctor_id?: string | null
+          id?: string
+          patient_id?: string | null
+          rating?: number | null
+          review_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       users: {
         Row: {
