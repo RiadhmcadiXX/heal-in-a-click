@@ -1,4 +1,3 @@
-
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SPECIALTIES, CITIES } from "@/lib/constants";
+import { LocationDetailsSection } from "./LocationDetailsSection";
 
 interface ProfileFormFieldsProps {
   form: {
@@ -23,6 +23,9 @@ interface ProfileFormFieldsProps {
     specialty: string;
     consultation_fee: number | null;
     bio: string | null;
+    location_type: string;
+    exact_location_address: string | null;
+    building_name: string | null;
   };
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleSelectChange: (field: string, value: string) => void;
@@ -153,6 +156,11 @@ export function ProfileFormFields({
           />
         </div>
       </div>
+      <LocationDetailsSection
+        form={form}
+        handleInputChange={handleInputChange}
+        handleSelectChange={handleSelectChange}
+      />
       <div className="space-y-2">
         <Label htmlFor="bio">Bio</Label>
         <Textarea

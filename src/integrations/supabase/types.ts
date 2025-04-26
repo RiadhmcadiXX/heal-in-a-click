@@ -145,16 +145,21 @@ export type Database = {
         Row: {
           address: string | null
           bio: string | null
+          building_name: string | null
           city: string | null
           consultation_fee: number | null
           created_at: string | null
           education: string[] | null
+          exact_location_address: string | null
           experience: number | null
           first_name: string
           id: string
           languages: string[] | null
           last_name: string
+          latitude: number | null
           location_photos: string[] | null
+          location_type: string
+          longitude: number | null
           phone: string | null
           profile_image_url: string | null
           specialty: string
@@ -163,16 +168,21 @@ export type Database = {
         Insert: {
           address?: string | null
           bio?: string | null
+          building_name?: string | null
           city?: string | null
           consultation_fee?: number | null
           created_at?: string | null
           education?: string[] | null
+          exact_location_address?: string | null
           experience?: number | null
           first_name: string
           id?: string
           languages?: string[] | null
           last_name: string
+          latitude?: number | null
           location_photos?: string[] | null
+          location_type: string
+          longitude?: number | null
           phone?: string | null
           profile_image_url?: string | null
           specialty: string
@@ -181,16 +191,21 @@ export type Database = {
         Update: {
           address?: string | null
           bio?: string | null
+          building_name?: string | null
           city?: string | null
           consultation_fee?: number | null
           created_at?: string | null
           education?: string[] | null
+          exact_location_address?: string | null
           experience?: number | null
           first_name?: string
           id?: string
           languages?: string[] | null
           last_name?: string
+          latitude?: number | null
           location_photos?: string[] | null
+          location_type?: string
+          longitude?: number | null
           phone?: string | null
           profile_image_url?: string | null
           specialty?: string

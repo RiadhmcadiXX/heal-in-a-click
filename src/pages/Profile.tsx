@@ -25,6 +25,9 @@ interface DoctorProfile {
   consultation_fee: number | null;
   bio: string | null;
   location_photos: string[] | null;
+  location_type: string;
+  exact_location_address: string;
+  building_name: string;
 }
 
 export default function ProfilePage() {
@@ -45,6 +48,9 @@ export default function ProfilePage() {
     consultation_fee: null,
     bio: "",
     location_photos: [],
+    location_type: "clinic",
+    exact_location_address: "",
+    building_name: "",
   });
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
@@ -57,6 +63,7 @@ export default function ProfilePage() {
         .select("*")
         .eq("user_id", user.id)
         .maybeSingle();
+      
       if (error) {
         setStatusMsg("Failed to load profile. Please try again.");
         setIsLoading(false);
@@ -77,6 +84,9 @@ export default function ProfilePage() {
           consultation_fee: data.consultation_fee ?? null,
           bio: data.bio ?? "",
           location_photos: data.location_photos ?? [],
+          location_type: data.location_type ?? "clinic",
+          exact_location_address: data.exact_location_address ?? "",
+          building_name: data.building_name ?? "",
         });
       }
       setIsLoading(false);
@@ -160,6 +170,9 @@ export default function ProfilePage() {
         consultation_fee: form.consultation_fee,
         bio: form.bio,
         location_photos: form.location_photos,
+        location_type: form.location_type,
+        exact_location_address: form.exact_location_address,
+        building_name: form.building_name,
       })
       .eq("id", profile.id);
 
