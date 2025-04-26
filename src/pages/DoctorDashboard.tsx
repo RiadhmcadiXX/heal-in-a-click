@@ -16,6 +16,7 @@ import { DayAvailabilitySidebar } from "@/components/DayAvailabilitySidebar";
 import { AddAppointmentModal } from "@/components/AddAppointmentModal";
 import { WeeklyCalendarView } from "@/components/WeeklyCalendarView";
 import { useWeeklyCalendarAdapter } from "@/hooks/useWeeklyCalendarAdapter";
+import { PendingAppointmentsList } from "@/components/PendingAppointmentsList";
 
 const WORKING_HOURS = [
   "09:00:00",
@@ -178,6 +179,11 @@ export default function DoctorDashboard() {
     return appointments.filter(apt => apt.appointment_date === formattedSelectedDate);
   }, [appointments, date]);
 
+  const pendingAppointments = useMemo(() => {
+    if (!appointments || appointments.length === 0) return [];
+    return appointments.filter(apt => apt.status === "pending");
+  }, [appointments]);
+
   if (loading || !user) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
@@ -216,37 +222,47 @@ export default function DoctorDashboard() {
           </div>
         </div>
 
-        {viewMode === "day" ? (
-          <div className="flex flex-col md:flex-row gap-6 items-start">
-            <DayAvailabilitySidebar
-              slots={daySlots.map((s) => ({
-                time: formatHourLabel(s.time),
-                status: s.status,
-              }))}
-              onAddAppointmentClick={() => setShowAddModal(true)}
-              onSlotClick={undefined}
-            />
+        <div className="flex gap-6 items-start">
+          {viewMode === "day" ? (
+            <>
+              <div className="flex flex-col md:flex-row gap-6 items-start flex-1">
+                <DayAvailabilitySidebar
+                  slots={daySlots.map((s) => ({
+                    time: formatHourLabel(s.time),
+                    status: s.status,
+                  }))}
+                  onAddAppointmentClick={() => setShowAddModal(true)}
+                  onSlotClick={undefined}
+                />
 
-            <div className="flex-1 w-full md:max-w-xl">
-              <MonthlyCalendar
-                date={date}
-                onDateSelect={(newDate) => newDate && setDate(newDate)}
-                hasAppointmentOnDate={hasAppointmentOnDate}
+                <div className="flex-1 w-full md:max-w-xl">
+                  <MonthlyCalendar
+                    date={date}
+                    onDateSelect={(newDate) => newDate && setDate(newDate)}
+                    hasAppointmentOnDate={hasAppointmentOnDate}
+                  />
+                </div>
+              </div>
+              <div className="w-80 sticky top-4">
+                <PendingAppointmentsList 
+                  appointments={pendingAppointments}
+                  onStatusChange={refreshAppointments}
+                />
+              </div>
+            </>
+          ) : (
+            <Card className="p-6 w-full">
+              <WeeklyCalendarView
+                appointments={formattedWeeklyAppointments}
+                onAppointmentClick={(apt) => {
+                  setSelectedAppointment(apt.originalData);
+                }}
+                selectedDate={date}
+                onDateChange={setDate}
               />
-            </div>
-          </div>
-        ) : (
-          <Card className="p-6">
-            <WeeklyCalendarView
-              appointments={formattedWeeklyAppointments}
-              onAppointmentClick={(apt) => {
-                setSelectedAppointment(apt.originalData);
-              }}
-              selectedDate={date}
-              onDateChange={setDate}
-            />
-          </Card>
-        )}
+            </Card>
+          )}
+        </div>
 
         <div className="mt-8">
           <Card>
