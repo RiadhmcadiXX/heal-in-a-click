@@ -52,7 +52,10 @@ export function AppointmentsTable({
             <TableRow
               key={appointment.id}
               className={cn(
-                selectedAppointmentId === appointment.id ? "bg-gray-100" : ""
+                selectedAppointmentId === appointment.id ? "bg-gray-100" : "",
+                appointment.status === 'pending' && "bg-yellow-50/50",
+                appointment.status === 'accepted' && "bg-green-50/50",
+                appointment.status === 'refused' && "bg-red-50/50"
               )}
               onClick={() => onAppointmentClick(appointment)}
             >
@@ -69,10 +72,10 @@ export function AppointmentsTable({
                 <span className={cn(
                   "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
                   {
-                    "bg-blue-100 text-blue-800": appointment.status === "scheduled",
+                    "bg-yellow-100 text-yellow-800": appointment.status === "pending",
+                    "bg-blue-100 text-blue-800": appointment.status === "accepted",
                     "bg-green-100 text-green-800": appointment.status === "completed",
-                    "bg-red-100 text-red-800": appointment.status === "cancelled",
-                    "bg-yellow-100 text-yellow-800": appointment.status === "waiting",
+                    "bg-red-100 text-red-800": appointment.status === "refused" || appointment.status === "cancelled",
                     "bg-gray-300 text-gray-900": appointment.status === "no-show"
                   }
                 )}>
