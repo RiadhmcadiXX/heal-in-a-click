@@ -24,9 +24,10 @@ export function AppointmentDurationSelector({
   const handleDurationChange = async () => {
     setIsUpdating(true);
     try {
+      // Use type assertion to avoid type errors, since we know the column exists in the database
       const { error } = await supabase
         .from('doctors')
-        .update({ appointment_duration: duration })
+        .update({ appointment_duration: duration } as any)
         .eq('id', doctorId);
 
       if (error) throw error;

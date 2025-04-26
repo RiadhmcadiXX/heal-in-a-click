@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { format, addDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,13 +63,14 @@ export function useAvailabilityManager(doctorId: string | undefined) {
       try {
         const { data, error } = await supabase
           .from('doctors')
-          .select('appointment_duration')
+          .select('*')  // Select all columns to avoid type errors
           .eq('id', doctorId)
           .single();
 
         if (error) throw error;
 
         if (data) {
+          // Use optional chaining and provide a fallback
           setAppointmentDuration(data.appointment_duration || 60);
         }
       } catch (error) {

@@ -144,6 +144,7 @@ export type Database = {
       doctors: {
         Row: {
           address: string | null
+          appointment_duration: number | null
           bio: string | null
           building_name: string | null
           city: string | null
@@ -167,6 +168,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          appointment_duration?: number | null
           bio?: string | null
           building_name?: string | null
           city?: string | null
@@ -190,6 +192,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          appointment_duration?: number | null
           bio?: string | null
           building_name?: string | null
           city?: string | null

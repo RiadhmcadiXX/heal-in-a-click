@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -12,23 +13,49 @@ import { AvailabilityTimeSlots } from "@/components/AvailabilityTimeSlots";
 import { useAvailabilityManager } from "@/hooks/useAvailabilityManager";
 import { AppointmentDurationSelector } from "@/components/AppointmentDurationSelector";
 
-const timeSlots = [
-  { label: "9:00 AM", value: "09:00:00" },
-  { label: "10:00 AM", value: "10:00:00" },
-  { label: "11:00 AM", value: "11:00:00" },
-  { label: "12:00 PM", value: "12:00:00" },
-  { label: "1:00 PM", value: "13:00:00" },
-  { label: "2:00 PM", value: "14:00:00" },
-  { label: "3:00 PM", value: "15:00:00" },
-  { label: "4:00 PM", value: "16:00:00" },
-  { label: "5:00 PM", value: "17:00:00" }
-];
+// Generate time slots dynamically based on appointment duration
+const generateTimeSlots = (durationMinutes: number = 60) => {
+  const slots = [];
+  const startHour = 9; // 9 AM
+  const endHour = 17; // 5 PM
+  
+  for (let hour = startHour; hour <= endHour; hour++) {
+    for (let minute = 0; minute < 60; minute += durationMinutes) {
+      if (hour === endHour && minute > 0) continue; // Don't go past end hour
+      
+      const hourFormatted = hour < 10 ? `0${hour}` : `${hour}`;
+      const minuteFormatted = minute < 10 ? `0${minute}` : `${minute}`;
+      const time = `${hourFormatted}:${minuteFormatted}:00`;
+      
+      const label = `${hour % 12 || 12}:${minuteFormatted} ${hour >= 12 ? 'PM' : 'AM'}`;
+      slots.push({ label, value: time });
+    }
+  }
+  
+  return slots;
+};
 
 export default function ManageAvailability() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const { toast } = useToast();
   const [doctor, setDoctor] = useState<any>(null);
+  const [timeSlots, setTimeSlots] = useState<{ label: string; value: string }[]>([]);
+  
+  const {
+    selectedDate,
+    setSelectedDate,
+    selectedSlots,
+    setSelectedSlots,
+    isSubmitting,
+    handleSaveAvailability,
+    appointmentDuration
+  } = useAvailabilityManager(doctor?.id);
+
+  useEffect(() => {
+    // Update time slots whenever appointment duration changes
+    setTimeSlots(generateTimeSlots(appointmentDuration));
+  }, [appointmentDuration]);
   
   useEffect(() => {
     async function fetchDoctorData() {
@@ -59,20 +86,16 @@ export default function ManageAvailability() {
     }
   }, [user, toast]);
 
-  const {
-    selectedDate,
-    setSelectedDate,
-    selectedSlots,
-    setSelectedSlots,
-    isSubmitting,
-    handleSaveAvailability
-  } = useAvailabilityManager(doctor?.id);
-
   useEffect(() => {
     if (!loading && !user) {
       navigate('/login');
     }
   }, [loading, user, navigate]);
+
+  const handleDurationChange = (newDuration: number) => {
+    // Update time slots when duration changes
+    setTimeSlots(generateTimeSlots(newDuration));
+  };
 
   if (loading || !user) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
@@ -93,7 +116,7 @@ export default function ManageAvailability() {
             <AppointmentDurationSelector
               doctorId={doctor.id}
               currentDuration={doctor.appointment_duration}
-              onDurationChange={() => {}}
+              onDurationChange={handleDurationChange}
             />
           </div>
         )}
