@@ -18,6 +18,9 @@ export type RegisterFormData = {
   experience: number;
   consultationFee: number;
   bio: string;
+  location_type: string;
+  exact_location_address?: string;
+  building_name?: string;
 }
 
 export function MultiStepRegisterForm() {
@@ -34,6 +37,7 @@ export function MultiStepRegisterForm() {
     experience: 0,
     consultationFee: 0,
     bio: "",
+    location_type: "clinic", // Set default location type
   });
   
   const updateFormData = (stepData: Partial<RegisterFormData>) => {

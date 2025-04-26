@@ -24,6 +24,7 @@ export default function Step3ProfessionalInfo({ formData, updateFormData, onBack
     specialty?: string;
     experience?: string;
     consultationFee?: string;
+    location_type?: string;
   }>({});
   
   const specialties = [
@@ -38,6 +39,13 @@ export default function Step3ProfessionalInfo({ formData, updateFormData, onBack
     "General Practice"
   ];
   
+  const locationTypes = [
+    { value: "cabinet", label: "Private Cabinet" },
+    { value: "clinic", label: "Clinic" },
+    { value: "hospital", label: "Hospital" },
+    { value: "medical_center", label: "Medical Center" }
+  ];
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -45,6 +53,7 @@ export default function Step3ProfessionalInfo({ formData, updateFormData, onBack
     if (!formData.specialty) newErrors.specialty = "Specialty is required";
     if (!formData.experience) newErrors.experience = "Years of experience is required";
     if (!formData.consultationFee) newErrors.consultationFee = "Consultation fee is required";
+    if (!formData.location_type) newErrors.location_type = "Location type is required";
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -72,20 +81,21 @@ export default function Step3ProfessionalInfo({ formData, updateFormData, onBack
         // 2. Create a doctor record
         const { error: doctorError } = await supabase
           .from('doctors')
-          .insert([
-            { 
-              user_id: authData.user.id,
-              first_name: formData.firstName,
-              last_name: formData.lastName,
-              specialty: formData.specialty,
-              phone: formData.phone,
-              address: formData.address,
-              city: formData.city,
-              experience: formData.experience,
-              consultation_fee: formData.consultationFee,
-              bio: formData.bio
-            }
-          ]);
+          .insert({
+            user_id: authData.user.id,
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            specialty: formData.specialty,
+            phone: formData.phone,
+            address: formData.address,
+            city: formData.city,
+            experience: formData.experience,
+            consultation_fee: formData.consultationFee,
+            bio: formData.bio,
+            location_type: formData.location_type,
+            exact_location_address: formData.exact_location_address,
+            building_name: formData.building_name
+          });
         
         if (doctorError) throw doctorError;
         
@@ -124,6 +134,46 @@ export default function Step3ProfessionalInfo({ formData, updateFormData, onBack
           </SelectContent>
         </Select>
         {errors.specialty && <p className="text-sm text-red-500">{errors.specialty}</p>}
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="location_type">Location Type</Label>
+        <Select 
+          value={formData.location_type} 
+          onValueChange={(value) => updateFormData({ location_type: value })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select location type" />
+          </SelectTrigger>
+          <SelectContent>
+            {locationTypes.map((type) => (
+              <SelectItem key={type.value} value={type.value}>
+                {type.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {errors.location_type && <p className="text-sm text-red-500">{errors.location_type}</p>}
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="building_name">Building Name (Optional)</Label>
+        <Input
+          id="building_name"
+          value={formData.building_name || ""}
+          onChange={(e) => updateFormData({ building_name: e.target.value })}
+          placeholder="e.g., Medical Tower, City Hospital"
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="exact_location_address">Exact Location Address (Optional)</Label>
+        <Input
+          id="exact_location_address"
+          value={formData.exact_location_address || ""}
+          onChange={(e) => updateFormData({ exact_location_address: e.target.value })}
+          placeholder="Full address of your practice location"
+        />
       </div>
       
       <div className="space-y-2">
