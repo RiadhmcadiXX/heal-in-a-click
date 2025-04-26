@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { DoctorAvailabilityCalendar } from "@/components/DoctorAvailabilityCalendar";
 import { AvailabilityTimeSlots } from "@/components/AvailabilityTimeSlots";
 import { useAvailabilityManager } from "@/hooks/useAvailabilityManager";
+import { AppointmentDurationSelector } from "@/components/AppointmentDurationSelector";
 
 const timeSlots = [
   { label: "9:00 AM", value: "09:00:00" },
@@ -30,7 +30,6 @@ export default function ManageAvailability() {
   const { toast } = useToast();
   const [doctor, setDoctor] = useState<any>(null);
   
-  // Fetch doctor data
   useEffect(() => {
     async function fetchDoctorData() {
       if (!user) return;
@@ -60,7 +59,6 @@ export default function ManageAvailability() {
     }
   }, [user, toast]);
 
-  // Use availability manager hook
   const {
     selectedDate,
     setSelectedDate,
@@ -70,7 +68,6 @@ export default function ManageAvailability() {
     handleSaveAvailability
   } = useAvailabilityManager(doctor?.id);
 
-  // Redirect if not logged in
   useEffect(() => {
     if (!loading && !user) {
       navigate('/login');
@@ -90,6 +87,16 @@ export default function ManageAvailability() {
           <h1 className="text-2xl font-bold">Manage Your Availability</h1>
           <p className="text-gray-500">Select dates and times when you're available for appointments</p>
         </div>
+
+        {doctor && (
+          <div className="mb-6">
+            <AppointmentDurationSelector
+              doctorId={doctor.id}
+              currentDuration={doctor.appointment_duration}
+              onDurationChange={() => {}}
+            />
+          </div>
+        )}
 
         <div className="grid md:grid-cols-2 gap-6">
           <Card>

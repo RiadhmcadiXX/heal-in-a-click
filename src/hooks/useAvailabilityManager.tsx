@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { format, addDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,8 +9,8 @@ export function useAvailabilityManager(doctorId: string | undefined) {
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [existingSlots, setExistingSlots] = useState<Record<string, string[]>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Fetch existing availability slots for the next 30 days
+  const [appointmentDuration, setAppointmentDuration] = useState<number>(60);
+
   useEffect(() => {
     async function fetchAvailability() {
       if (!doctorId) return;
@@ -29,7 +28,6 @@ export function useAvailabilityManager(doctorId: string | undefined) {
 
         if (error) throw error;
 
-        // Organize slots by date
         const slots: Record<string, string[]> = {};
         data?.forEach(slot => {
           const date = slot.available_date;
@@ -50,13 +48,36 @@ export function useAvailabilityManager(doctorId: string | undefined) {
     }
   }, [doctorId]);
 
-  // Update selected slots when date changes
   useEffect(() => {
     if (selectedDate) {
       const dateString = format(selectedDate, 'yyyy-MM-dd');
       setSelectedSlots(existingSlots[dateString] || []);
     }
   }, [selectedDate, existingSlots]);
+
+  useEffect(() => {
+    async function fetchDoctorSettings() {
+      if (!doctorId) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('doctors')
+          .select('appointment_duration')
+          .eq('id', doctorId)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          setAppointmentDuration(data.appointment_duration || 60);
+        }
+      } catch (error) {
+        console.error('Error fetching doctor settings:', error);
+      }
+    }
+
+    fetchDoctorSettings();
+  }, [doctorId]);
 
   const handleSaveAvailability = async () => {
     if (!doctorId || !selectedDate) return;
@@ -66,14 +87,12 @@ export function useAvailabilityManager(doctorId: string | undefined) {
     try {
       const dateString = format(selectedDate, 'yyyy-MM-dd');
 
-      // Delete existing slots for this date
       await supabase
         .from('doctor_availabilities')
         .delete()
         .eq('doctor_id', doctorId)
         .eq('available_date', dateString);
 
-      // Insert new slots
       if (selectedSlots.length > 0) {
         const slotsToInsert = selectedSlots.map(time => ({
           doctor_id: doctorId,
@@ -88,7 +107,6 @@ export function useAvailabilityManager(doctorId: string | undefined) {
         if (error) throw error;
       }
 
-      // Update local state
       setExistingSlots(prev => ({
         ...prev,
         [dateString]: selectedSlots
@@ -116,6 +134,7 @@ export function useAvailabilityManager(doctorId: string | undefined) {
     selectedSlots,
     setSelectedSlots,
     isSubmitting,
-    handleSaveAvailability
+    handleSaveAvailability,
+    appointmentDuration
   };
 }
