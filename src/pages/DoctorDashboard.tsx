@@ -251,16 +251,18 @@ export default function DoctorDashboard() {
               </div>
             </>
           ) : (
-            <Card className="p-6 w-full">
-              <WeeklyCalendarView
-                appointments={formattedWeeklyAppointments}
-                onAppointmentClick={(apt) => {
-                  setSelectedAppointment(apt.originalData);
-                }}
-                selectedDate={date}
-                onDateChange={setDate}
-              />
-            </Card>
+            <div className="w-full overflow-x-auto">
+              <Card className="p-4 w-full">
+                <WeeklyCalendarView
+                  appointments={formattedWeeklyAppointments}
+                  onAppointmentClick={(apt) => {
+                    setSelectedAppointment(apt.originalData);
+                  }}
+                  selectedDate={date}
+                  onDateChange={setDate}
+                />
+              </Card>
+            </div>
           )}
         </div>
 
