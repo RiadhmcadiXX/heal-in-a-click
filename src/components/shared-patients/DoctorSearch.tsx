@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Search, Share } from "lucide-react";
+import { Search, Share, MapPin, Phone } from "lucide-react";
 import { useDoctors } from "@/hooks/useDoctors";
 import { Doctor } from "@/types";
 import { useState } from "react";
@@ -49,14 +49,25 @@ export default function DoctorSearch({
           ) : doctors && doctors.length > 0 && searchQuery ? (
             <div className="space-y-2">
               {doctors.map((doctor: Doctor) => (
-                <div key={doctor.id} className="flex flex-col p-2 rounded-md border">
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <p className="font-medium">{doctor.name}</p>
-                      <p className="text-sm text-muted-foreground">{doctor.specialty}</p>
-                      <div className="text-sm text-muted-foreground mt-1">
-                        <p>📍 {doctor.city}</p>
-                        <p>📱 {doctor.phone || 'No phone number'}</p>
+                <div key={doctor.id} className="flex flex-col p-4 rounded-md border">
+                  <div className="flex items-start justify-between gap-4 mb-2">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-1">
+                        <Doctor className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{doctor.name}</p>
+                        <p className="text-sm text-muted-foreground">{doctor.specialty}</p>
+                        <div className="flex flex-col gap-1 mt-1">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <MapPin className="h-3 w-3" />
+                            <span>{doctor.city}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Phone className="h-3 w-3" />
+                            <span>{doctor.phone || 'No phone number'}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
