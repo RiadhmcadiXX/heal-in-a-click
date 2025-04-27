@@ -78,18 +78,14 @@ export function usePatientSharing() {
 
       if (doctorError) throw doctorError;
 
-      const { data, error } = await supabase
+      // Modified query: Fetch shared patients and use separate queries for doctor info
+      const { data: sharedData, error } = await supabase
         .from('shared_patients')
         .select(`
           *,
           patients (
             first_name,
             last_name
-          ),
-          from_doctor (
-            first_name,
-            last_name,
-            profile_image_url
           )
         `)
         .or(`from_doctor_id.eq.${doctorData.id},to_doctor_id.eq.${doctorData.id}`)
@@ -97,11 +93,28 @@ export function usePatientSharing() {
 
       if (error) throw error;
 
+      // Get all doctor IDs we need to fetch (from_doctor_id)
+      const doctorIds = sharedData.map(item => item.from_doctor_id);
+      
+      // Fetch doctor information in a separate query
+      const { data: doctorsData } = await supabase
+        .from('doctors')
+        .select('id, first_name, last_name, profile_image_url')
+        .in('id', doctorIds);
+
+      // Create a map of doctor data by ID for easy lookup
+      const doctorsMap = {};
+      if (doctorsData) {
+        doctorsData.forEach(doctor => {
+          doctorsMap[doctor.id] = doctor;
+        });
+      }
+
       // Process the data to ensure it matches our expected type
-      const processedData: SharedPatient[] = (data || []).map((item: any) => ({
+      const processedData: SharedPatient[] = (sharedData || []).map((item: any) => ({
         ...item,
-        // Ensure from_doctor is consistent with our type
-        from_doctor: item.from_doctor || {
+        // Merge in the doctor data from our map
+        from_doctor: doctorsMap[item.from_doctor_id] || {
           first_name: "Unknown",
           last_name: "Doctor",
           profile_image_url: null
