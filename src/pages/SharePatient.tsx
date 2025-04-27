@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { usePatientSharing } from '@/hooks/usePatientSharing';
@@ -42,7 +41,6 @@ export default function SharePatientPage() {
           .not('patient_id', 'is', null);
 
         if (data) {
-          // Remove duplicates based on patient_id
           const uniquePatients = data.reduce((acc: PatientVisit[], current: PatientVisit) => {
             const exists = acc.find(item => item.patient_id === current.patient_id);
             if (!exists) {
@@ -65,7 +63,7 @@ export default function SharePatientPage() {
     fetchSharedPatients();
   }, []);
 
-  const handleSharePatient = async (doctorId: string) => {
+  const handleSharePatient = async (doctorId: string, notes?: string) => {
     if (!selectedPatient) {
       toast({
         variant: "destructive",
@@ -75,8 +73,7 @@ export default function SharePatientPage() {
       return;
     }
 
-    await sharePatientWithDoctor(selectedPatient, doctorId);
-    // Refresh the shared patients list
+    await sharePatientWithDoctor(selectedPatient, doctorId, notes);
     const data = await getSharedPatients();
     setSharedPatients(data);
   };

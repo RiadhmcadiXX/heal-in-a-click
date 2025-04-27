@@ -16,7 +16,8 @@ export function useDoctors(searchQuery: string = "", specialty: string = "") {
           specialty,
           city,
           consultation_fee,
-          experience
+          experience,
+          phone
         `);
 
       if (searchQuery) {
@@ -43,12 +44,14 @@ export function useDoctors(searchQuery: string = "", specialty: string = "") {
         name: `${doctor.first_name} ${doctor.last_name}`,
         specialty: doctor.specialty,
         city: doctor.city,
+        phone: doctor.phone,
         consultationFee: doctor.consultation_fee,
-        rating: 4.5, // This would come from reviews in a real implementation
+        rating: 4.5,
         experience: doctor.experience,
-        imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=" + doctor.id, // Using DiceBear for placeholder images
+        imageUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=" + doctor.id,
         about: `Dr. ${doctor.first_name} ${doctor.last_name} is a highly qualified ${doctor.specialty.toLowerCase()} specialist with ${doctor.experience} years of experience.`
       }));
     },
+    enabled: searchQuery.length > 0
   });
 }
