@@ -16,7 +16,7 @@ interface SharedWithMeTableProps {
 
 export default function SharedWithMeTable({ sharedPatients }: SharedWithMeTableProps) {
   // Filter to show only patients shared with me (where I'm the to_doctor)
-  const filteredPatients = sharedPatients.filter(shared => !shared.from_doctor?.id);
+  const filteredPatients = sharedPatients.filter(shared => shared.to_doctor_id);
 
   return (
     <div className="rounded-md border">
