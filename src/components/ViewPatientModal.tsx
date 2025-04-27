@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -14,6 +13,8 @@ import {
   AlertCircle 
 } from "lucide-react";
 import { format } from "date-fns";
+import { PatientFileUpload } from "./PatientFileUpload";
+import { PatientFilesList } from "./PatientFilesList";
 
 export function ViewPatientModal({
   appointment,
@@ -169,6 +170,26 @@ export function ViewPatientModal({
             <h3 className="font-semibold mb-3">Appointment Notes</h3>
             <div className="text-gray-700">
               {appointment.notes || <span className="text-gray-400">No notes for this appointment</span>}
+            </div>
+          </Card>
+
+          {/* Add Files Section */}
+          <Card className="p-4">
+            <h3 className="font-semibold mb-3">Patient Files</h3>
+            <div className="space-y-4">
+              <PatientFilesList patientId={appointment.patient_id} />
+              <PatientFileUpload 
+                patientId={appointment.patient_id} 
+                doctorId={appointment.doctor_id}
+                onUploadComplete={() => {
+                  // Refresh the file list when a new file is uploaded
+                  const filesList = document.querySelector('PatientFilesList');
+                  if (filesList) {
+                    // @ts-ignore
+                    filesList.loadFiles();
+                  }
+                }}
+              />
             </div>
           </Card>
         </div>
