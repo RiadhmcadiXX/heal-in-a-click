@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Search, Share, MapPin, Phone } from "lucide-react";
+import { Search, Share, MapPin, Phone, UserRound } from "lucide-react";
 import { useDoctors } from "@/hooks/useDoctors";
 import { Doctor } from "@/types";
 import { useState } from "react";
@@ -53,7 +53,7 @@ export default function DoctorSearch({
                   <div className="flex items-start justify-between gap-4 mb-2">
                     <div className="flex items-start gap-3">
                       <div className="mt-1">
-                        <Doctor className="h-5 w-5 text-muted-foreground" />
+                        <UserRound className="h-5 w-5 text-muted-foreground" />
                       </div>
                       <div>
                         <p className="font-medium">{doctor.name}</p>

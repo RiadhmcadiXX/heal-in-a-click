@@ -30,6 +30,7 @@ export function usePatientSharing() {
 
       if (doctorError) throw doctorError;
 
+      // Create a new sharing record each time, even if the same combination exists
       const { data, error } = await supabase
         .from('shared_patients')
         .insert({
