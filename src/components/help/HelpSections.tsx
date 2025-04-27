@@ -1,17 +1,17 @@
-
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   BookOpen,
   Calendar,
   UserPlus,
   Settings,
   HelpCircle,
+  ChevronDown,
 } from "lucide-react";
+import { useState } from "react";
 
 interface HelpSectionsProps {
   searchQuery: string;
@@ -22,17 +22,32 @@ const helpContent = {
     {
       title: "How to create your account",
       icon: UserPlus,
-      content: "1. Click 'Sign Up' in the top right corner\n2. Fill in your personal information\n3. Verify your email address\n4. Complete your profile"
+      steps: [
+        "Click 'Sign Up' in the top right corner",
+        "Fill in your personal information",
+        "Verify your email address",
+        "Complete your profile"
+      ]
     },
     {
       title: "How to book an appointment",
       icon: Calendar,
-      content: "1. Log into your account\n2. Browse available doctors\n3. Select your preferred time slot\n4. Confirm your appointment"
+      steps: [
+        "Log into your account",
+        "Browse available doctors",
+        "Select your preferred time slot",
+        "Confirm your appointment"
+      ]
     },
     {
       title: "How to manage your profile",
       icon: Settings,
-      content: "1. Click on your profile icon\n2. Select 'Edit Profile'\n3. Update your information\n4. Save your changes"
+      steps: [
+        "Click on your profile icon",
+        "Select 'Edit Profile'",
+        "Update your information",
+        "Save your changes"
+      ]
     }
   ],
   faqs: [
@@ -70,77 +85,102 @@ const helpContent = {
 };
 
 export function HelpSections({ searchQuery }: HelpSectionsProps) {
+  const [openSections, setOpenSections] = useState<{[key: string]: boolean}>({});
+
+  const toggleSection = (sectionTitle: string) => {
+    setOpenSections(prev => ({
+      ...prev,
+      [sectionTitle]: !prev[sectionTitle]
+    }));
+  };
+
   const filterContent = (content: any[]) => {
     if (!searchQuery) return content;
     return content.filter(item => 
       item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.content.toLowerCase().includes(searchQuery.toLowerCase())
+      (item.steps && item.steps.some((step: string) => 
+        step.toLowerCase().includes(searchQuery.toLowerCase())
+      ))
     );
   };
 
   return (
     <div className="space-y-8">
-      <Accordion type="single" collapsible className="w-full">
-        <AccordionItem value="quick-start">
-          <AccordionTrigger className="text-xl font-semibold">
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5" />
-              Quick Start Guide
-            </div>
-          </AccordionTrigger>
-          <AccordionContent>
-            <div className="space-y-4 p-4">
-              {filterContent(helpContent.quickStart).map((item, index) => (
-                <div key={index} className="bg-white p-4 rounded-lg shadow-sm">
-                  <div className="flex items-center gap-2 font-medium mb-2">
-                    <item.icon className="h-5 w-5" />
-                    {item.title}
-                  </div>
-                  <p className="text-gray-600 whitespace-pre-line">{item.content}</p>
+      <div>
+        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+          <BookOpen className="h-6 w-6" />
+          Quick Start Guide
+        </h2>
+        <div className="space-y-4">
+          {filterContent(helpContent.quickStart).map((item, index) => (
+            <Collapsible 
+              key={index} 
+              open={openSections[item.title]}
+              onOpenChange={() => toggleSection(item.title)}
+              className="bg-white rounded-lg shadow-sm"
+            >
+              <CollapsibleTrigger className="w-full text-left p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-2">
+                  <item.icon className="h-5 w-5" />
+                  <span className="font-medium">{item.title}</span>
                 </div>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
+                <ChevronDown 
+                  className={`h-5 w-5 transition-transform ${
+                    openSections[item.title] ? 'rotate-180' : ''
+                  }`} 
+                />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="p-4 pt-0">
+                <ol className="list-decimal list-inside text-gray-600 space-y-2">
+                  {item.steps.map((step, stepIndex) => (
+                    <li key={stepIndex}>{step}</li>
+                  ))}
+                </ol>
+              </CollapsibleContent>
+            </Collapsible>
+          ))}
+        </div>
+      </div>
 
-        <AccordionItem value="faqs">
-          <AccordionTrigger className="text-xl font-semibold">
-            <div className="flex items-center gap-2">
-              <HelpCircle className="h-5 w-5" />
-              Frequently Asked Questions
-            </div>
-          </AccordionTrigger>
-          <AccordionContent>
-            <div className="space-y-4 p-4">
-              {filterContent(helpContent.faqs).map((item, index) => (
-                <div key={index} className="bg-white p-4 rounded-lg shadow-sm">
-                  <h3 className="font-medium mb-2">{item.title}</h3>
-                  <p className="text-gray-600">{item.content}</p>
-                </div>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
+      <div>
+        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+          <HelpCircle className="h-6 w-6" />
+          Frequently Asked Questions
+        </h2>
+        <div className="space-y-4">
+          {helpContent.faqs.map((item, index) => (
+            <Collapsible key={index} className="bg-white rounded-lg shadow-sm">
+              <CollapsibleTrigger className="w-full text-left p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                <span className="font-medium">{item.title}</span>
+                <ChevronDown className="h-5 w-5 transition-transform" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="p-4 pt-0">
+                <p className="text-gray-600">{item.content}</p>
+              </CollapsibleContent>
+            </Collapsible>
+          ))}
+        </div>
+      </div>
 
-        <AccordionItem value="errors">
-          <AccordionTrigger className="text-xl font-semibold">
-            <div className="flex items-center gap-2">
-              <HelpCircle className="h-5 w-5" />
-              Common Errors and Solutions
-            </div>
-          </AccordionTrigger>
-          <AccordionContent>
-            <div className="space-y-4 p-4">
-              {filterContent(helpContent.errors).map((item, index) => (
-                <div key={index} className="bg-white p-4 rounded-lg shadow-sm">
-                  <h3 className="font-medium mb-2">{item.title}</h3>
-                  <p className="text-gray-600">{item.content}</p>
-                </div>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+      <div>
+        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+          <HelpCircle className="h-6 w-6" />
+          Common Errors and Solutions
+        </h2>
+        <div className="space-y-4">
+          {helpContent.errors.map((item, index) => (
+            <Collapsible key={index} className="bg-white rounded-lg shadow-sm">
+              <CollapsibleTrigger className="w-full text-left p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                <span className="font-medium">{item.title}</span>
+                <ChevronDown className="h-5 w-5 transition-transform" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="p-4 pt-0">
+                <p className="text-gray-600">{item.content}</p>
+              </CollapsibleContent>
+            </Collapsible>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
