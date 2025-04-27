@@ -105,7 +105,7 @@ export default function ManageAvailability() {
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Header />
 
-      <main className="flex-1 container max-w-3xl mx-auto px-4 pb-24 pt-4">
+      <main className="flex-1 container max-w-5xl mx-auto px-6 pb-24 pt-4">
         <div className="mb-6">
           <h1 className="text-2xl font-bold">Manage Your Availability</h1>
           <p className="text-gray-500">Select dates and times when you're available for appointments</p>
