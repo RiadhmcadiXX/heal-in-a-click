@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { format, addDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,6 +88,7 @@ export function useAvailabilityManager(doctorId: string | undefined) {
     try {
       const dateString = format(selectedDate, 'yyyy-MM-dd');
 
+      // Delete existing slots for the date
       await supabase
         .from('doctor_availabilities')
         .delete()
