@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { ChevronLeft, User, LogOut } from "lucide-react";
+import { ChevronLeft, User, LogOut, HelpCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 export function Header() {
@@ -10,10 +9,8 @@ export function Header() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   
-  // Determine if we should show back button (not on dashboard)
   const showBackButton = !["/", "/dashboard"].includes(location.pathname);
   
-  // Determine page title based on route
   const getPageTitle = () => {
     switch (location.pathname) {
       case "/":
@@ -50,24 +47,31 @@ export function Header() {
           {getPageTitle()}
         </h1>
         
-        {user ? (
-          <div className="flex items-center space-x-2">
-            <Link to="/profile">
+        <div className="flex items-center space-x-2">
+          <Link to="/help">
+            <Button variant="ghost" size="icon">
+              <HelpCircle className="h-5 w-5" />
+            </Button>
+          </Link>
+          {user ? (
+            <div className="flex items-center space-x-2">
+              <Link to="/profile">
+                <Button variant="ghost" size="icon">
+                  <User className="h-5 w-5" />
+                </Button>
+              </Link>
+              <Button variant="ghost" size="icon" onClick={signOut}>
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </div>
+          ) : (
+            <Link to="/login">
               <Button variant="ghost" size="icon">
                 <User className="h-5 w-5" />
               </Button>
             </Link>
-            <Button variant="ghost" size="icon" onClick={signOut}>
-              <LogOut className="h-5 w-5" />
-            </Button>
-          </div>
-        ) : (
-          <Link to="/login">
-            <Button variant="ghost" size="icon">
-              <User className="h-5 w-5" />
-            </Button>
-          </Link>
-        )}
+          )}
+        </div>
       </div>
     </header>
   );
