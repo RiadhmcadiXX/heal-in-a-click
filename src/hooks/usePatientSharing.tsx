@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -17,10 +18,14 @@ export function usePatientSharing() {
       
       const { data: userData } = await supabase.auth.getUser();
       
+      if (!userData.user) {
+        throw new Error("User not authenticated");
+      }
+      
       const { data: doctorData, error: doctorError } = await supabase
         .from('doctors')
         .select('id')
-        .eq('user_id', userData.user?.id)
+        .eq('user_id', userData.user.id)
         .single();
 
       if (doctorError) throw doctorError;
@@ -55,16 +60,20 @@ export function usePatientSharing() {
     }
   };
 
-  const getSharedPatients = async () => {
+  const getSharedPatients = async (): Promise<SharedPatient[]> => {
     try {
       setLoading(true);
       
       const { data: userData } = await supabase.auth.getUser();
       
+      if (!userData.user) {
+        throw new Error("User not authenticated");
+      }
+      
       const { data: doctorData, error: doctorError } = await supabase
         .from('doctors')
         .select('id')
-        .eq('user_id', userData.user?.id)
+        .eq('user_id', userData.user.id)
         .single();
 
       if (doctorError) throw doctorError;
@@ -88,7 +97,18 @@ export function usePatientSharing() {
 
       if (error) throw error;
 
-      return data as SharedPatient[];
+      // Process the data to ensure it matches our expected type
+      const processedData: SharedPatient[] = (data || []).map((item: any) => ({
+        ...item,
+        // Ensure from_doctor is consistent with our type
+        from_doctor: item.from_doctor || {
+          first_name: "Unknown",
+          last_name: "Doctor",
+          profile_image_url: null
+        }
+      }));
+
+      return processedData;
     } catch (error: any) {
       toast({
         variant: 'destructive',

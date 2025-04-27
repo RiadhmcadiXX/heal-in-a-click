@@ -1,3 +1,4 @@
+
 // Types for our application
 
 export interface User {
@@ -78,7 +79,7 @@ export interface SharedPatient {
   from_doctor: {
     first_name: string;
     last_name: string;
-    profile_image_url?: string;
+    profile_image_url?: string | null;
     [key: string]: any;
-  };
+  } | null;
 }
