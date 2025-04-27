@@ -417,6 +417,58 @@ export type Database = {
           },
         ]
       }
+      shared_patients: {
+        Row: {
+          active: boolean | null
+          from_doctor_id: string
+          id: string
+          notes: string | null
+          patient_id: string
+          shared_at: string
+          to_doctor_id: string
+        }
+        Insert: {
+          active?: boolean | null
+          from_doctor_id: string
+          id?: string
+          notes?: string | null
+          patient_id: string
+          shared_at?: string
+          to_doctor_id: string
+        }
+        Update: {
+          active?: boolean | null
+          from_doctor_id?: string
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          shared_at?: string
+          to_doctor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_patients_from_doctor_id_fkey"
+            columns: ["from_doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_patients_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_patients_to_doctor_id_fkey"
+            columns: ["to_doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           avatar_url: string | null

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { ChevronLeft, User, LogOut, HelpCircle } from "lucide-react";
+import { ChevronLeft, User, LogOut, HelpCircle, Share2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 export function Header() {
@@ -73,6 +73,14 @@ export function Header() {
           )}
         </div>
       </div>
+      {user && (
+        <nav>
+          <Link to="/share-patient" className="flex items-center space-x-2 hover:bg-gray-100 p-2 rounded">
+            <Share2 className="h-4 w-4" />
+            <span>Share Patient</span>
+          </Link>
+        </nav>
+      )}
     </header>
   );
 }

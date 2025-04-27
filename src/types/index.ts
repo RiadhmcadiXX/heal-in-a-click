@@ -1,4 +1,3 @@
-
 // Types for our application
 
 export interface User {
@@ -56,4 +55,24 @@ export interface PatientVisit {
     [key: string]: any;
   };
   status: string;
+}
+
+export interface SharedPatient {
+  id: string;
+  from_doctor_id: string;
+  to_doctor_id: string;
+  patient_id: string;
+  shared_at: string;
+  notes?: string;
+  active: boolean;
+  patients: {
+    first_name: string;
+    last_name: string;
+    [key: string]: any;
+  };
+  from_doctor: {
+    first_name: string;
+    last_name: string;
+    profile_image_url?: string;
+  };
 }
