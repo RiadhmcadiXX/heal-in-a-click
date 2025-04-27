@@ -17,10 +17,12 @@ export function usePatientSharing() {
       setLoading(true);
       
       // Fetch the current doctor's ID
+      const { data: userData } = await supabase.auth.getUser();
+      
       const { data: doctorData, error: doctorError } = await supabase
         .from('doctors')
         .select('id')
-        .eq('user_id', supabase.auth.getUser().data?.user?.id)
+        .eq('user_id', userData.user?.id)
         .single();
 
       if (doctorError) throw doctorError;
@@ -60,10 +62,12 @@ export function usePatientSharing() {
       setLoading(true);
       
       // Fetch the current doctor's ID
+      const { data: userData } = await supabase.auth.getUser();
+      
       const { data: doctorData, error: doctorError } = await supabase
         .from('doctors')
         .select('id')
-        .eq('user_id', supabase.auth.getUser().data?.user?.id)
+        .eq('user_id', userData.user?.id)
         .single();
 
       if (doctorError) throw doctorError;

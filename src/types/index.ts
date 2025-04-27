@@ -1,3 +1,4 @@
+
 // Types for our application
 
 export interface User {
@@ -18,6 +19,11 @@ export interface Doctor {
   rating: number;
   experience: number;
   about: string;
+  // Additional fields from database
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  profile_image_url?: string;
 }
 
 export interface TimeSlot {
@@ -74,5 +80,6 @@ export interface SharedPatient {
     first_name: string;
     last_name: string;
     profile_image_url?: string;
+    [key: string]: any;
   };
 }

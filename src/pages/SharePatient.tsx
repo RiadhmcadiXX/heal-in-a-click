@@ -11,23 +11,43 @@ import { usePatientSharing } from '@/hooks/usePatientSharing';
 import { useToast } from '@/hooks/use-toast';
 import { Doctor, PatientVisit } from '@/types';
 
+interface DatabaseDoctor {
+  id: string;
+  first_name: string;
+  last_name: string;
+  specialty: string;
+  phone?: string;
+  profile_image_url?: string;
+}
+
+interface PatientData {
+  id: string;
+  patient_id: string;
+  patients: {
+    first_name: string;
+    last_name: string;
+  };
+}
+
 export default function SharePatientPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
-  const [selectedPatient, setSelectedPatient] = useState<PatientVisit | null>(null);
+  const [doctors, setDoctors] = useState<DatabaseDoctor[]>([]);
+  const [selectedDoctor, setSelectedDoctor] = useState<DatabaseDoctor | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<PatientData | null>(null);
   const [sharingNotes, setSharingNotes] = useState('');
   const { sharePatientWithDoctor, loading } = usePatientSharing();
   const { toast } = useToast();
 
   // Fetch patient from the current doctor's appointments
-  const [patients, setPatients] = useState<PatientVisit[]>([]);
+  const [patients, setPatients] = useState<PatientData[]>([]);
   useEffect(() => {
     const fetchPatients = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      
       const { data: doctorData } = await supabase
         .from('doctors')
         .select('id')
-        .eq('user_id', supabase.auth.getUser().data?.user?.id)
+        .eq('user_id', userData.user?.id)
         .single();
 
       if (doctorData) {
@@ -44,13 +64,7 @@ export default function SharePatientPage() {
           .eq('doctor_id', doctorData.id);
 
         if (data) {
-          setPatients(data.map(appointment => ({
-            ...appointment,
-            patients: {
-              first_name: appointment.patients?.first_name || '',
-              last_name: appointment.patients?.last_name || ''
-            }
-          })));
+          setPatients(data as PatientData[]);
         }
       }
     };
@@ -66,21 +80,23 @@ export default function SharePatientPage() {
         return;
       }
 
+      const { data: userData } = await supabase.auth.getUser();
+      
       const { data: currentDoctorData } = await supabase
         .from('doctors')
         .select('id')
-        .eq('user_id', supabase.auth.getUser().data?.user?.id)
+        .eq('user_id', userData.user?.id)
         .single();
 
       const { data, error } = await supabase
         .from('doctors')
-        .select('*')
+        .select('id, first_name, last_name, specialty, phone, profile_image_url')
         .or(
           `first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,specialty.ilike.%${searchQuery}%`
         )
         .neq('id', currentDoctorData?.id);
 
-      if (data) setDoctors(data);
+      if (data) setDoctors(data as DatabaseDoctor[]);
     };
 
     searchDoctors();
