@@ -43,3 +43,17 @@ export interface Appointment {
   doctorSpecialty: string;
   doctorImageUrl: string;
 }
+
+export interface PatientVisit {
+  id: string;
+  patient_id: string;
+  appointment_date: string;
+  appointment_time: string;
+  doctor_id: string;
+  patients: {
+    first_name: string;
+    last_name: string;
+    [key: string]: any;
+  };
+  status: string;
+}
