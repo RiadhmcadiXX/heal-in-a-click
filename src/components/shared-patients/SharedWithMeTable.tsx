@@ -9,14 +9,39 @@ import {
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SharedPatient } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { useEffect, useState } from 'react';
 
 interface SharedWithMeTableProps {
   sharedPatients: SharedPatient[];
 }
 
 export default function SharedWithMeTable({ sharedPatients }: SharedWithMeTableProps) {
-  // Filter to show only patients shared with me (where I'm the to_doctor)
-  const filteredPatients = sharedPatients.filter(shared => shared.to_doctor_id);
+  const [currentDoctorId, setCurrentDoctorId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getCurrentDoctor = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: doctorData } = await supabase
+          .from('doctors')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (doctorData) {
+          setCurrentDoctorId(doctorData.id);
+        }
+      }
+    };
+    
+    getCurrentDoctor();
+  }, []);
+
+  // Filter to show only patients shared with the current doctor (where they're the to_doctor)
+  const filteredPatients = sharedPatients.filter(shared => 
+    shared.to_doctor_id === currentDoctorId
+  );
 
   return (
     <div className="rounded-md border">
