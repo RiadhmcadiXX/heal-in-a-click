@@ -1,4 +1,3 @@
-
 // Types for our application
 
 export interface User {

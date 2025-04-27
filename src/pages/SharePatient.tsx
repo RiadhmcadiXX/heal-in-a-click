@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { usePatientSharing } from '@/hooks/usePatientSharing';
 import { useToast } from '@/hooks/use-toast';
 import { Doctor, PatientVisit } from '@/types';
+import SharedPatientsTable from '@/components/SharedPatientsTable';
 
 interface DatabaseDoctor {
   id: string;
@@ -38,7 +38,6 @@ export default function SharePatientPage() {
   const { sharePatientWithDoctor, loading } = usePatientSharing();
   const { toast } = useToast();
 
-  // Fetch patient from the current doctor's appointments
   const [patients, setPatients] = useState<PatientData[]>([]);
   useEffect(() => {
     const fetchPatients = async () => {
@@ -72,7 +71,6 @@ export default function SharePatientPage() {
     fetchPatients();
   }, []);
 
-  // Search for doctors
   useEffect(() => {
     const searchDoctors = async () => {
       if (searchQuery.length < 2) {
@@ -119,7 +117,6 @@ export default function SharePatientPage() {
     );
 
     if (result) {
-      // Reset selections
       setSelectedDoctor(null);
       setSelectedPatient(null);
       setSharingNotes('');
@@ -129,6 +126,12 @@ export default function SharePatientPage() {
   return (
     <div className="container mx-auto p-4 space-y-6">
       <h1 className="text-2xl font-bold">Share Patient Details</h1>
+
+      {/* Shared Patients Table */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">Shared Patients</h2>
+        <SharedPatientsTable />
+      </div>
 
       {/* Patient Selection */}
       <Card>

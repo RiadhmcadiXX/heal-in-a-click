@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -16,7 +15,6 @@ export function usePatientSharing() {
     try {
       setLoading(true);
       
-      // Fetch the current doctor's ID
       const { data: userData } = await supabase.auth.getUser();
       
       const { data: doctorData, error: doctorError } = await supabase
@@ -61,7 +59,6 @@ export function usePatientSharing() {
     try {
       setLoading(true);
       
-      // Fetch the current doctor's ID
       const { data: userData } = await supabase.auth.getUser();
       
       const { data: doctorData, error: doctorError } = await supabase
