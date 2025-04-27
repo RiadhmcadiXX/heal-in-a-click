@@ -23,19 +23,23 @@ export default function PatientSelector({
   return (
     <Card>
       <CardContent className="p-4">
-        <h2 className="text-lg font-semibold mb-4">Select Patient</h2>
-        <Select value={selectedPatient || undefined} onValueChange={onSelectPatient}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select a patient" />
-          </SelectTrigger>
-          <SelectContent>
-            {patients.map((patient) => (
-              <SelectItem key={patient.patient_id} value={patient.patient_id}>
-                {patient.patients.first_name} {patient.patients.last_name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <h2 className="text-lg font-semibold mb-4">Select Patient to Share</h2>
+        {patients.length > 0 ? (
+          <Select value={selectedPatient || undefined} onValueChange={onSelectPatient}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a patient" />
+            </SelectTrigger>
+            <SelectContent>
+              {patients.map((patient) => (
+                <SelectItem key={patient.patient_id} value={patient.patient_id}>
+                  {patient.patients.first_name} {patient.patients.last_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <p className="text-sm text-muted-foreground">No patients found</p>
+        )}
       </CardContent>
     </Card>
   );

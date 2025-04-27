@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { usePatientSharing } from '@/hooks/usePatientSharing';
-import { Card } from '@/components/ui/card';
+import { useToast } from "@/hooks/use-toast";
 import SharedWithMeTable from '@/components/shared-patients/SharedWithMeTable';
 import SharedByMeTable from '@/components/shared-patients/SharedByMeTable';
 import PatientSelector from '@/components/shared-patients/PatientSelector';
@@ -13,8 +13,9 @@ export default function SharePatientPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [patients, setPatients] = useState<PatientVisit[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<string | null>(null);
-  const { getSharedPatients, loading } = usePatientSharing();
+  const { getSharedPatients, sharePatientWithDoctor, loading } = usePatientSharing();
   const [sharedPatients, setSharedPatients] = useState([]);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchPatients = async () => {
@@ -37,10 +38,20 @@ export default function SharePatientPage() {
               last_name
             )
           `)
-          .eq('doctor_id', doctorData.id);
+          .eq('doctor_id', doctorData.id)
+          .not('patient_id', 'is', null);
 
         if (data) {
-          setPatients(data as PatientVisit[]);
+          // Remove duplicates based on patient_id
+          const uniquePatients = data.reduce((acc: PatientVisit[], current: PatientVisit) => {
+            const exists = acc.find(item => item.patient_id === current.patient_id);
+            if (!exists) {
+              acc.push(current);
+            }
+            return acc;
+          }, []);
+          
+          setPatients(uniquePatients);
         }
       }
     };
@@ -53,6 +64,22 @@ export default function SharePatientPage() {
     fetchPatients();
     fetchSharedPatients();
   }, []);
+
+  const handleSharePatient = async (doctorId: string) => {
+    if (!selectedPatient) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please select a patient first",
+      });
+      return;
+    }
+
+    await sharePatientWithDoctor(selectedPatient, doctorId);
+    // Refresh the shared patients list
+    const data = await getSharedPatients();
+    setSharedPatients(data);
+  };
 
   if (loading) {
     return <div className="flex justify-center p-4">Loading...</div>;
@@ -86,7 +113,9 @@ export default function SharePatientPage() {
         <div>
           <DoctorSearch
             searchQuery={searchQuery}
+            selectedPatient={selectedPatient}
             onSearchChange={setSearchQuery}
+            onSharePatient={handleSharePatient}
           />
         </div>
       </div>
