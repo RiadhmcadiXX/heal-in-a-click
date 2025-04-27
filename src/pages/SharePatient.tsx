@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { usePatientSharing } from '@/hooks/usePatientSharing';
@@ -89,11 +90,11 @@ export default function SharePatientPage() {
       {/* Tables Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         <div>
-          <h2 className="text-xl font-semibold mb-4">Patients Shared With Me</h2>
+          <h2 className="text-xl font-semibold mb-4">Patients Received From Other Doctors</h2>
           <SharedWithMeTable sharedPatients={sharedPatients} />
         </div>
         <div>
-          <h2 className="text-xl font-semibold mb-4">Patients I've Shared</h2>
+          <h2 className="text-xl font-semibold mb-4">Patients Shared With Other Doctors</h2>
           <SharedByMeTable sharedPatients={sharedPatients} />
         </div>
       </div>

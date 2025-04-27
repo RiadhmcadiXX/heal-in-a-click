@@ -15,6 +15,7 @@ interface SharedByMeTableProps {
 }
 
 export default function SharedByMeTable({ sharedPatients }: SharedByMeTableProps) {
+  // Filter to show only patients I've shared (where I'm the from_doctor)
   const filteredPatients = sharedPatients.filter(shared => shared.from_doctor?.id);
 
   return (
@@ -23,35 +24,41 @@ export default function SharedByMeTable({ sharedPatients }: SharedByMeTableProps
         <TableHeader>
           <TableRow>
             <TableHead>Patient Name</TableHead>
-            <TableHead>Shared With</TableHead>
+            <TableHead>Shared With (Recipient)</TableHead>
             <TableHead>Date Shared</TableHead>
             <TableHead>Notes</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredPatients.map((shared) => (
-            <TableRow key={shared.id}>
-              <TableCell>
-                {shared.patients?.first_name || "Unknown"} {shared.patients?.last_name || "Patient"}
+          {filteredPatients.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={4} className="text-center text-muted-foreground">
+                You haven't shared any patients yet
               </TableCell>
-              <TableCell className="flex items-center gap-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage 
-                    src={shared.from_doctor?.profile_image_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${shared.to_doctor_id}`} 
-                    alt={`${shared.from_doctor?.first_name || "Unknown"} ${shared.from_doctor?.last_name || "Doctor"}`} 
-                  />
-                  <AvatarFallback>
-                    {(shared.from_doctor?.first_name?.[0] || "U")}{(shared.from_doctor?.last_name?.[0] || "D")}
-                  </AvatarFallback>
-                </Avatar>
-                <span>
-                  {shared.from_doctor?.first_name || "Unknown"} {shared.from_doctor?.last_name || "Doctor"}
-                </span>
-              </TableCell>
-              <TableCell>{new Date(shared.shared_at).toLocaleDateString()}</TableCell>
-              <TableCell>{shared.notes || '-'}</TableCell>
             </TableRow>
-          ))}
+          ) : (
+            filteredPatients.map((shared) => (
+              <TableRow key={shared.id}>
+                <TableCell>
+                  {shared.patients?.first_name || "Unknown"} {shared.patients?.last_name || "Patient"}
+                </TableCell>
+                <TableCell className="flex items-center gap-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage 
+                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${shared.to_doctor_id}`} 
+                      alt={`Doctor ${shared.to_doctor_id}`} 
+                    />
+                    <AvatarFallback>DR</AvatarFallback>
+                  </Avatar>
+                  <span>
+                    Dr. {shared.to_doctor_id}
+                  </span>
+                </TableCell>
+                <TableCell>{new Date(shared.shared_at).toLocaleDateString()}</TableCell>
+                <TableCell>{shared.notes || '-'}</TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
     </div>
