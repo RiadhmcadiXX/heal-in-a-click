@@ -1,44 +1,21 @@
+
 import React, { useState, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Textarea } from '@/components/ui/textarea';
-import { Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { usePatientSharing } from '@/hooks/usePatientSharing';
-import { useToast } from '@/hooks/use-toast';
-import { Doctor, PatientVisit } from '@/types';
-import SharedPatientsTable from '@/components/SharedPatientsTable';
-
-interface DatabaseDoctor {
-  id: string;
-  first_name: string;
-  last_name: string;
-  specialty: string;
-  phone?: string;
-  profile_image_url?: string;
-}
-
-interface PatientData {
-  id: string;
-  patient_id: string;
-  patients: {
-    first_name: string;
-    last_name: string;
-  };
-}
+import { Card } from '@/components/ui/card';
+import SharedWithMeTable from '@/components/shared-patients/SharedWithMeTable';
+import SharedByMeTable from '@/components/shared-patients/SharedByMeTable';
+import PatientSelector from '@/components/shared-patients/PatientSelector';
+import DoctorSearch from '@/components/shared-patients/DoctorSearch';
+import { PatientVisit } from '@/types';
 
 export default function SharePatientPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [doctors, setDoctors] = useState<DatabaseDoctor[]>([]);
-  const [selectedDoctor, setSelectedDoctor] = useState<DatabaseDoctor | null>(null);
-  const [selectedPatient, setSelectedPatient] = useState<PatientData | null>(null);
-  const [sharingNotes, setSharingNotes] = useState('');
-  const { sharePatientWithDoctor, loading } = usePatientSharing();
-  const { toast } = useToast();
+  const [patients, setPatients] = useState<PatientVisit[]>([]);
+  const [selectedPatient, setSelectedPatient] = useState<string | null>(null);
+  const { getSharedPatients, loading } = usePatientSharing();
+  const [sharedPatients, setSharedPatients] = useState([]);
 
-  const [patients, setPatients] = useState<PatientData[]>([]);
   useEffect(() => {
     const fetchPatients = async () => {
       const { data: userData } = await supabase.auth.getUser();
@@ -50,7 +27,7 @@ export default function SharePatientPage() {
         .single();
 
       if (doctorData) {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('appointments')
           .select(`
             id,
@@ -63,159 +40,56 @@ export default function SharePatientPage() {
           .eq('doctor_id', doctorData.id);
 
         if (data) {
-          setPatients(data as PatientData[]);
+          setPatients(data as PatientVisit[]);
         }
       }
     };
 
-    fetchPatients();
-  }, []);
-
-  useEffect(() => {
-    const searchDoctors = async () => {
-      if (searchQuery.length < 2) {
-        setDoctors([]);
-        return;
-      }
-
-      const { data: userData } = await supabase.auth.getUser();
-      
-      const { data: currentDoctorData } = await supabase
-        .from('doctors')
-        .select('id')
-        .eq('user_id', userData.user?.id)
-        .single();
-
-      const { data, error } = await supabase
-        .from('doctors')
-        .select('id, first_name, last_name, specialty, phone, profile_image_url')
-        .or(
-          `first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,specialty.ilike.%${searchQuery}%`
-        )
-        .neq('id', currentDoctorData?.id);
-
-      if (data) setDoctors(data as DatabaseDoctor[]);
+    const fetchSharedPatients = async () => {
+      const data = await getSharedPatients();
+      setSharedPatients(data);
     };
 
-    searchDoctors();
-  }, [searchQuery]);
+    fetchPatients();
+    fetchSharedPatients();
+  }, []);
 
-  const handleSharePatient = async () => {
-    if (!selectedDoctor || !selectedPatient) {
-      toast({
-        variant: 'destructive',
-        title: 'Selection Required',
-        description: 'Please select a doctor and a patient to share.'
-      });
-      return;
-    }
-
-    const result = await sharePatientWithDoctor(
-      selectedPatient.patient_id, 
-      selectedDoctor.id, 
-      sharingNotes
-    );
-
-    if (result) {
-      setSelectedDoctor(null);
-      setSelectedPatient(null);
-      setSharingNotes('');
-    }
-  };
+  if (loading) {
+    return <div className="flex justify-center p-4">Loading...</div>;
+  }
 
   return (
     <div className="container mx-auto p-4 space-y-6">
       <h1 className="text-2xl font-bold">Share Patient Details</h1>
 
-      {/* Shared Patients Table */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">Shared Patients</h2>
-        <SharedPatientsTable />
+      {/* Tables Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Patients Shared With Me</h2>
+          <SharedWithMeTable sharedPatients={sharedPatients} />
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Patients I've Shared</h2>
+          <SharedByMeTable sharedPatients={sharedPatients} />
+        </div>
       </div>
 
-      {/* Patient Selection */}
-      <Card>
-        <CardContent className="p-4">
-          <h2 className="text-lg font-semibold mb-4">Select Patient</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {patients.map(patient => (
-              <div 
-                key={patient.id}
-                onClick={() => setSelectedPatient(patient)}
-                className={`
-                  border rounded-lg p-3 cursor-pointer 
-                  ${selectedPatient?.id === patient.id ? 'bg-blue-50 border-blue-500' : 'hover:bg-gray-100'}
-                `}
-              >
-                {patient.patients.first_name} {patient.patients.last_name}
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Doctor Search */}
-      <div className="relative">
-        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input 
-          placeholder="Search doctors by name or specialty..." 
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-8"
-        />
+      {/* Share Patient Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <PatientSelector
+            patients={patients}
+            selectedPatient={selectedPatient}
+            onSelectPatient={setSelectedPatient}
+          />
+        </div>
+        <div>
+          <DoctorSearch
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+          />
+        </div>
       </div>
-
-      {/* Doctor Results */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {doctors.map(doctor => (
-          <Card 
-            key={doctor.id}
-            onClick={() => setSelectedDoctor(doctor)}
-            className={`
-              cursor-pointer 
-              ${selectedDoctor?.id === doctor.id ? 'border-blue-500 bg-blue-50' : 'hover:bg-gray-100'}
-            `}
-          >
-            <CardContent className="p-4 flex items-center space-x-4">
-              <Avatar>
-                <AvatarImage 
-                  src={doctor.profile_image_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${doctor.id}`} 
-                  alt={`${doctor.first_name} ${doctor.last_name}`} 
-                />
-                <AvatarFallback>
-                  {doctor.first_name[0]}{doctor.last_name[0]}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h3 className="font-semibold">{doctor.first_name} {doctor.last_name}</h3>
-                <p className="text-sm text-muted-foreground">{doctor.specialty}</p>
-                <p className="text-sm text-muted-foreground">{doctor.phone}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Sharing Notes */}
-      {selectedDoctor && selectedPatient && (
-        <Card>
-          <CardContent className="p-4 space-y-4">
-            <h2 className="text-lg font-semibold">Share Patient Details</h2>
-            <Textarea 
-              placeholder="Add optional notes for the receiving doctor..."
-              value={sharingNotes}
-              onChange={(e) => setSharingNotes(e.target.value)}
-            />
-            <Button 
-              onClick={handleSharePatient}
-              disabled={loading}
-              className="w-full"
-            >
-              {loading ? 'Sharing...' : `Share ${selectedPatient.patients.first_name} ${selectedPatient.patients.last_name} with ${selectedDoctor.first_name} ${selectedDoctor.last_name}`}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
