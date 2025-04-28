@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { format, addDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -130,6 +131,125 @@ export function useAvailabilityManager(doctorId: string | undefined) {
     }
   };
 
+  const handleSaveWeeklySchedule = async (weeklySchedule: Record<string, Array<{ startTime: string; endTime: string }>>) => {
+    if (!doctorId) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Generate dates for each day of the week
+      const today = new Date();
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - today.getDay()); // Get Sunday
+      
+      // Convert weekly schedule to availability slots
+      const slotsToInsert: Array<{
+        doctor_id: string;
+        available_date: string;
+        available_time: string;
+      }> = [];
+
+      // Define mapping from day names to day indices
+      const dayMapping: Record<string, number> = {
+        sunday: 0,
+        monday: 1,
+        tuesday: 2,
+        wednesday: 3,
+        thursday: 4,
+        friday: 5,
+        saturday: 6,
+      };
+      
+      // For each day in the weekly schedule
+      for (const [day, timeRanges] of Object.entries(weeklySchedule)) {
+        if (timeRanges.length === 0) continue;
+        
+        // Get the day index (0 = Sunday, 1 = Monday, etc.)
+        const dayIndex = dayMapping[day.toLowerCase()];
+        if (dayIndex === undefined) continue;
+        
+        // Calculate the date for this day
+        const date = new Date(startOfWeek);
+        date.setDate(startOfWeek.getDate() + dayIndex);
+        
+        // Format the date as YYYY-MM-DD
+        const dateString = format(date, 'yyyy-MM-dd');
+        
+        // Delete existing slots for this day
+        await supabase
+          .from('doctor_availabilities')
+          .delete()
+          .eq('doctor_id', doctorId)
+          .eq('available_date', dateString);
+        
+        // Add slots for each time range on this day
+        for (const { startTime, endTime } of timeRanges) {
+          // Create slots based on appointment duration
+          const start = new Date(`1970-01-01T${startTime}`);
+          const end = new Date(`1970-01-01T${endTime}`);
+          
+          // Add slots at the specified interval (appointment_duration)
+          while (start < end) {
+            const timeSlot = format(start, 'HH:mm:00');
+            
+            slotsToInsert.push({
+              doctor_id: doctorId,
+              available_date: dateString,
+              available_time: timeSlot
+            });
+            
+            // Increment by appointment duration in minutes
+            start.setMinutes(start.getMinutes() + appointmentDuration);
+          }
+        }
+      }
+      
+      // Insert all generated slots
+      if (slotsToInsert.length > 0) {
+        const { error } = await supabase
+          .from('doctor_availabilities')
+          .insert(slotsToInsert);
+        
+        if (error) throw error;
+      }
+      
+      // Refresh the existing slots data
+      const startDate = format(new Date(), 'yyyy-MM-dd');
+      const endDate = format(addDays(new Date(), 30), 'yyyy-MM-dd');
+      
+      const { data, error } = await supabase
+        .from('doctor_availabilities')
+        .select('*')
+        .eq('doctor_id', doctorId)
+        .gte('available_date', startDate)
+        .lte('available_date', endDate);
+        
+      if (!error && data) {
+        const slots: Record<string, string[]> = {};
+        data.forEach(slot => {
+          const date = slot.available_date;
+          if (!slots[date]) slots[date] = [];
+          slots[date].push(slot.available_time);
+        });
+        setExistingSlots(slots);
+      }
+      
+      toast({
+        title: "Success",
+        description: "Your weekly schedule has been updated",
+      });
+    } catch (error: any) {
+      console.error('Error saving weekly schedule:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save weekly schedule",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return {
     selectedDate,
     setSelectedDate,
@@ -137,6 +257,7 @@ export function useAvailabilityManager(doctorId: string | undefined) {
     setSelectedSlots,
     isSubmitting,
     handleSaveAvailability,
+    handleSaveWeeklySchedule,
     appointmentDuration
   };
 }

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,7 @@ export default function ManageAvailability() {
     setSelectedSlots,
     isSubmitting,
     handleSaveAvailability,
+    handleSaveWeeklySchedule,
     appointmentDuration
   } = useAvailabilityManager(doctor?.id);
 
@@ -143,6 +145,7 @@ export default function ManageAvailability() {
             onSave={handleSaveAvailability}
             isSubmitting={isSubmitting}
             timeSlots={timeSlots}
+            onWeeklyScheduleSave={handleSaveWeeklySchedule}
           />
         </div>
 

@@ -5,8 +5,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
-import { format, addDays, startOfWeek } from "date-fns";
 
 interface TimeRange {
   startTime: string;
@@ -56,51 +54,12 @@ export function WeeklyAvailabilitySelector({ onSave }: WeeklyAvailabilitySelecto
   };
 
   const handleSave = async () => {
-    try {
-      const startDate = startOfWeek(new Date());
-      const slotsToInsert = [];
-
-      for (const [day, ranges] of Object.entries(timeRanges)) {
-        const dayIndex = weekDays.findIndex(d => d.value === day);
-        if (dayIndex === -1) continue;
-
-        const currentDate = format(addDays(startDate, dayIndex), 'yyyy-MM-dd');
-
-        for (const range of ranges) {
-          let start = new Date(`1970-01-01T${range.startTime}`);
-          const end = new Date(`1970-01-01T${range.endTime}`);
-
-          while (start < end) {
-            slotsToInsert.push({
-              available_date: currentDate,
-              available_time: format(start, 'HH:mm:00'),
-            });
-            // Increment by appointment duration (this should come from props)
-            start = new Date(start.getTime() + 15 * 60000); // Using 15 minutes as default
-          }
-        }
-      }
-
-      if (slotsToInsert.length > 0) {
-        const { error } = await supabase
-          .from('doctor_availabilities')
-          .insert(slotsToInsert);
-
-        if (error) throw error;
-      }
-
-      onSave(timeRanges);
-    } catch (error) {
-      console.error('Error saving weekly schedule:', error);
-    }
+    onSave(timeRanges);
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Set Weekly Availability</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <Card className="border-0 shadow-none">
+      <CardContent className="space-y-4 p-0">
         <div className="space-y-4">
           <div className="flex gap-4">
             <div className="space-y-2 flex-1">
