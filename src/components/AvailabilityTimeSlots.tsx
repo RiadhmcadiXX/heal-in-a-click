@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format } from "date-fns";
+import { format, addMinutes, parseISO } from "date-fns";
 import { WeeklyAvailabilitySelector } from "./WeeklyAvailabilitySelector";
 
 interface AvailabilityTimeSlotsProps {
@@ -16,6 +16,7 @@ interface AvailabilityTimeSlotsProps {
   isSubmitting: boolean;
   timeSlots: Array<{ label: string; value: string }>;
   onWeeklyScheduleSave: (weeklySchedule: Record<string, Array<{ startTime: string; endTime: string }>>) => void;
+  appointmentDuration?: number;
 }
 
 export function AvailabilityTimeSlots({
@@ -25,6 +26,7 @@ export function AvailabilityTimeSlots({
   onSave,
   isSubmitting,
   onWeeklyScheduleSave,
+  appointmentDuration = 60,
 }: AvailabilityTimeSlotsProps) {
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("17:00");
@@ -36,9 +38,14 @@ export function AvailabilityTimeSlots({
     const end = new Date(`1970-01-01T${endTime}`);
     const slots = [];
 
-    while (start < end) {
-      slots.push(format(start, 'HH:mm:00'));
-      start.setHours(start.getHours() + 1); // This should be based on appointment duration
+    // Create a temporary date to increment
+    let current = new Date(start);
+    
+    // Generate slots based on appointment duration
+    while (current < end) {
+      slots.push(format(current, 'HH:mm:00'));
+      // Add the appointment duration in minutes to the current time
+      current = addMinutes(current, appointmentDuration);
     }
 
     onSlotsChange([...new Set([...selectedSlots, ...slots])]);
@@ -87,6 +94,10 @@ export function AvailabilityTimeSlots({
                   <div className="flex items-end">
                     <Button onClick={handleAddTimeRange}>Add Time Range</Button>
                   </div>
+                </div>
+
+                <div className="text-sm text-gray-500 mb-2">
+                  Slots will be created every {appointmentDuration} minutes
                 </div>
 
                 <div className="space-y-2">
