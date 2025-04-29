@@ -7,7 +7,8 @@ import {
   BarChart, 
   User, 
   LogOut,
-  HelpCircle
+  HelpCircle,
+  Users
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,11 @@ export function AppSidebar() {
       title: "Dashboard",
       path: "/dashboard",
       icon: Home,
+    },
+    {
+      title: "Patients",
+      path: "/patients",
+      icon: Users,
     },
     {
       title: "Availability",

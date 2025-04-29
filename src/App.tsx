@@ -1,3 +1,4 @@
+
 import { 
   Toaster 
 } from "@/components/ui/toaster";
@@ -19,6 +20,7 @@ import SubscriptionPage from "./pages/SubscriptionPage";
 import Analytics from "./pages/Analytics";
 import Help from "./pages/Help";
 import SharePatient from "./pages/SharePatient";
+import PatientsManagement from "./pages/PatientsManagement";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +44,7 @@ const App = () => (
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/help" element={<Help />} />
           <Route path="/share-patient" element={<SharePatient />} />
+          <Route path="/patients" element={<PatientsManagement />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
