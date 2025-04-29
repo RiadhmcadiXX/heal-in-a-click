@@ -1,10 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -12,6 +9,7 @@ import { DoctorAvailabilityCalendar } from "@/components/DoctorAvailabilityCalen
 import { AvailabilityTimeSlots } from "@/components/AvailabilityTimeSlots";
 import { useAvailabilityManager } from "@/hooks/useAvailabilityManager";
 import { AppointmentDurationSelector } from "@/components/AppointmentDurationSelector";
+import { MainLayout } from "@/layouts/MainLayout";
 
 // Generate time slots dynamically based on appointment duration
 const generateTimeSlots = (durationMinutes: number = 60) => {
@@ -54,7 +52,6 @@ export default function ManageAvailability() {
   } = useAvailabilityManager(doctor?.id);
 
   useEffect(() => {
-    // Update time slots whenever appointment duration changes
     setTimeSlots(generateTimeSlots(appointmentDuration));
   }, [appointmentDuration]);
   
@@ -94,7 +91,6 @@ export default function ManageAvailability() {
   }, [loading, user, navigate]);
 
   const handleDurationChange = (newDuration: number) => {
-    // Update time slots when duration changes
     setTimeSlots(generateTimeSlots(newDuration));
   };
 
@@ -103,66 +99,61 @@ export default function ManageAvailability() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <Header />
+    <MainLayout>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">Manage Your Availability</h1>
+        <p className="text-gray-500">Select dates and times when you're available for appointments</p>
+      </div>
 
-      <main className="flex-1 container max-w-6xl mx-auto px-6 pb-24 pt-4">
+      {doctor && (
         <div className="mb-6">
-          <h1 className="text-2xl font-bold">Manage Your Availability</h1>
-          <p className="text-gray-500">Select dates and times when you're available for appointments</p>
+          <AppointmentDurationSelector
+            doctorId={doctor.id}
+            currentDuration={doctor.appointment_duration}
+            onDurationChange={handleDurationChange}
+          />
         </div>
+      )}
 
-        {doctor && (
-          <div className="mb-6">
-            <AppointmentDurationSelector
-              doctorId={doctor.id}
-              currentDuration={doctor.appointment_duration}
-              onDurationChange={handleDurationChange}
-            />
-          </div>
-        )}
+      <div className="grid md:grid-cols-5 gap-6">
+        <Card className="md:col-span-3">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Select Date</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {doctor && (
+              <DoctorAvailabilityCalendar
+                doctorId={doctor.id}
+                selectedDate={selectedDate}
+                onDateSelect={setSelectedDate}
+              />
+            )}
+          </CardContent>
+        </Card>
 
-        <div className="grid md:grid-cols-5 gap-6">
-          <Card className="md:col-span-3">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Select Date</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {doctor && (
-                <DoctorAvailabilityCalendar
-                  doctorId={doctor.id}
-                  selectedDate={selectedDate}
-                  onDateSelect={setSelectedDate}
-                />
-              )}
-            </CardContent>
-          </Card>
-
-          <div className="md:col-span-2">
-            <AvailabilityTimeSlots
-              selectedDate={selectedDate}
-              selectedSlots={selectedSlots}
-              onSlotsChange={setSelectedSlots}
-              onSave={handleSaveAvailability}
-              isSubmitting={isSubmitting}
-              timeSlots={timeSlots}
-              onWeeklyScheduleSave={handleSaveWeeklySchedule}
-              appointmentDuration={appointmentDuration}
-            />
-          </div>
+        <div className="md:col-span-2">
+          <AvailabilityTimeSlots
+            selectedDate={selectedDate}
+            selectedSlots={selectedSlots}
+            onSlotsChange={setSelectedSlots}
+            onSave={handleSaveAvailability}
+            isSubmitting={isSubmitting}
+            timeSlots={timeSlots}
+            onWeeklyScheduleSave={handleSaveWeeklySchedule}
+            appointmentDuration={appointmentDuration}
+          />
         </div>
+      </div>
 
-        <div className="mt-6">
-          <Button
-            variant="outline"
-            onClick={() => navigate('/dashboard')}
-            className="w-full"
-          >
-            Back to Dashboard
-          </Button>
-        </div>
-      </main>
-      <Footer />
-    </div>
+      <div className="mt-6">
+        <Button
+          variant="outline"
+          onClick={() => navigate('/dashboard')}
+          className="w-full"
+        >
+          Back to Dashboard
+        </Button>
+      </div>
+    </MainLayout>
   );
 }

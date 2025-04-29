@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
@@ -31,6 +32,12 @@ export function Header() {
         return "Heal-in-a-Click";
     }
   };
+  
+  // This header is now only used for non-dashboard pages
+  // The dashboard pages use the sidebar navigation instead
+  if (["/dashboard", "/availability", "/analytics", "/share-patient", "/profile"].includes(location.pathname)) {
+    return null;
+  }
   
   return (
     <header className="sticky top-0 z-50 bg-white border-b py-4 px-4">
@@ -73,7 +80,7 @@ export function Header() {
           )}
         </div>
       </div>
-      {user && (
+      {user && location.pathname !== "/share-patient" && (
         <nav>
           <Link to="/share-patient" className="flex items-center space-x-2 hover:bg-gray-100 p-2 rounded">
             <Share2 className="h-4 w-4" />

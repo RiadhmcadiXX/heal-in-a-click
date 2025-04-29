@@ -10,6 +10,7 @@ import { ProfilePhotoSection } from "@/components/profile/ProfilePhotoSection";
 import { LocationPhotosSection } from "@/components/profile/LocationPhotosSection";
 import { ProfileFormFields } from "@/components/profile/ProfileFormFields";
 import { AvatarSelector } from "@/components/profile/AvatarSelector";
+import { MainLayout } from "@/layouts/MainLayout";
 
 interface DoctorProfile {
   id: string;
@@ -30,7 +31,7 @@ interface DoctorProfile {
   building_name: string;
 }
 
-export default function ProfilePage() {
+export default function Profile() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -206,72 +207,74 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <Header />
+    <MainLayout>
+      <div className="flex flex-col min-h-screen bg-gray-50">
+        <Header />
 
-      <main className="flex-1 container max-w-xl mx-auto px-4 pb-24 pt-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Doctor Profile</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleUpdateProfile} className="space-y-6">
-              <AvatarSelector
-                selected={form.profile_image_url}
-                firstName={form.first_name}
-                lastName={form.last_name}
-                onSelect={handleProfilePhotoUpload}
-              />
+        <main className="flex-1 container max-w-xl mx-auto px-4 pb-24 pt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Doctor Profile</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleUpdateProfile} className="space-y-6">
+                <AvatarSelector
+                  selected={form.profile_image_url}
+                  firstName={form.first_name}
+                  lastName={form.last_name}
+                  onSelect={handleProfilePhotoUpload}
+                />
 
-              <ProfileFormFields
-                form={form}
-                handleInputChange={handleInputChange}
-                handleSelectChange={handleSelectChange}
-                handleLanguagesChange={handleLanguagesChange}
-                handleEducationChange={handleEducationChange}
-              />
+                <ProfileFormFields
+                  form={form}
+                  handleInputChange={handleInputChange}
+                  handleSelectChange={handleSelectChange}
+                  handleLanguagesChange={handleLanguagesChange}
+                  handleEducationChange={handleEducationChange}
+                />
 
-              <LocationPhotosSection
-                locationPhotos={form.location_photos || []}
-                onPhotoUpload={handleLocationPhotoUpload}
-                onPhotoRemove={removeLocationPhoto}
-              />
+                <LocationPhotosSection
+                  locationPhotos={form.location_photos || []}
+                  onPhotoUpload={handleLocationPhotoUpload}
+                  onPhotoRemove={removeLocationPhoto}
+                />
 
-              {statusMsg && (
-                <div
-                  className={
-                    statusMsg.includes("success")
-                      ? "text-green-600 text-sm"
-                      : "text-red-600 text-sm"
-                  }
+                {statusMsg && (
+                  <div
+                    className={
+                      statusMsg.includes("success")
+                        ? "text-green-600 text-sm"
+                        : "text-red-600 text-sm"
+                    }
+                  >
+                    {statusMsg}
+                  </div>
+                )}
+
+                <Button
+                  type="submit"
+                  className="w-full bg-healthcare-primary hover:bg-healthcare-primary/90"
+                  disabled={isLoading}
                 >
-                  {statusMsg}
-                </div>
-              )}
+                  {isLoading ? "Updating..." : "Update Profile"}
+                </Button>
+              </form>
 
-              <Button
-                type="submit"
-                className="w-full bg-healthcare-primary hover:bg-healthcare-primary/90"
-                disabled={isLoading}
-              >
-                {isLoading ? "Updating..." : "Update Profile"}
-              </Button>
-            </form>
+              <div className="mt-8 pt-6 border-t">
+                <Button
+                  variant="outline"
+                  className="w-full text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200"
+                  onClick={handleLogout}
+                >
+                  Sign Out
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </main>
 
-            <div className="mt-8 pt-6 border-t">
-              <Button
-                variant="outline"
-                className="w-full text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200"
-                onClick={handleLogout}
-              >
-                Sign Out
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </main>
-
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </MainLayout>
   );
 }
