@@ -1,0 +1,61 @@
+
+{
+  "app": {
+    "name": "Heal-in-a-Click"
+  },
+  "navigation": {
+    "dashboard": "Tableau de bord",
+    "patients": "Patients",
+    "availability": "Disponibilité",
+    "sharePatients": "Partager les patients", 
+    "analytics": "Analytique",
+    "profile": "Profil",
+    "help": "Aide",
+    "logout": "Déconnexion",
+    "home": "Accueil",
+    "appointments": "Rendez-vous"
+  },
+  "patients": {
+    "management": "Gestion des patients",
+    "search": "Rechercher des patients par nom, email ou téléphone...",
+    "views": {
+      "grid": "Vue grille",
+      "table": "Vue tableau"
+    },
+    "info": {
+      "name": "Nom du patient",
+      "email": "Email",
+      "phone": "Téléphone",
+      "dob": "Date de naissance",
+      "city": "Ville",
+      "noEmail": "Pas d'email",
+      "noPhone": "Pas de téléphone",
+      "noCity": "Pas de ville",
+      "notProvided": "Non fourni",
+      "invalidDate": "Date invalide"
+    },
+    "buttons": {
+      "manageFiles": "Gérer les fichiers"
+    },
+    "noPatients": {
+      "title": "Aucun patient trouvé",
+      "message": "Vous n'avez pas encore de patients",
+      "search": "Essayez d'ajuster votre recherche"
+    },
+    "files": {
+      "title": "Fichiers du patient",
+      "tabs": {
+        "view": "Voir les fichiers",
+        "upload": "Télécharger un fichier"
+      },
+      "success": "Fichier téléchargé",
+      "successMessage": "Le fichier a été téléchargé avec succès"
+    }
+  },
+  "language": {
+    "select": "Choisir la langue",
+    "en": "Anglais",
+    "fr": "Français",
+    "ar": "Arabe"
+  }
+}

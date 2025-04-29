@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { FileText, User, Mail, Phone, Calendar, MapPin } from "lucide-react";
 import { format } from "date-fns";
+import { useTranslation } from "react-i18next";
 
 interface Patient {
   id: string;
@@ -20,12 +21,14 @@ interface PatientTableProps {
 }
 
 export function PatientTable({ patients, onViewFiles }: PatientTableProps) {
+  const { t } = useTranslation();
+  
   function formatDate(dateString: string | null) {
-    if (!dateString) return "Not provided";
+    if (!dateString) return t("patients.info.notProvided");
     try {
       return format(new Date(dateString), 'MMM d, yyyy');
     } catch {
-      return "Invalid date";
+      return t("patients.info.invalidDate");
     }
   }
 
@@ -34,11 +37,11 @@ export function PatientTable({ patients, onViewFiles }: PatientTableProps) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead><User className="h-4 w-4 inline mr-2" />Patient Name</TableHead>
-            <TableHead><Mail className="h-4 w-4 inline mr-2" />Email</TableHead>
-            <TableHead><Phone className="h-4 w-4 inline mr-2" />Phone</TableHead>
-            <TableHead><Calendar className="h-4 w-4 inline mr-2" />Date of Birth</TableHead>
-            <TableHead><MapPin className="h-4 w-4 inline mr-2" />City</TableHead>
+            <TableHead><User className="h-4 w-4 inline mr-2" />{t("patients.info.name")}</TableHead>
+            <TableHead><Mail className="h-4 w-4 inline mr-2" />{t("patients.info.email")}</TableHead>
+            <TableHead><Phone className="h-4 w-4 inline mr-2" />{t("patients.info.phone")}</TableHead>
+            <TableHead><Calendar className="h-4 w-4 inline mr-2" />{t("patients.info.dob")}</TableHead>
+            <TableHead><MapPin className="h-4 w-4 inline mr-2" />{t("patients.info.city")}</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -48,10 +51,10 @@ export function PatientTable({ patients, onViewFiles }: PatientTableProps) {
               <TableCell className="font-medium">
                 {patient.first_name} {patient.last_name}
               </TableCell>
-              <TableCell>{patient.email || "No email"}</TableCell>
-              <TableCell>{patient.phone || "No phone"}</TableCell>
+              <TableCell>{patient.email || t("patients.info.noEmail")}</TableCell>
+              <TableCell>{patient.phone || t("patients.info.noPhone")}</TableCell>
               <TableCell>{formatDate(patient.date_of_birth)}</TableCell>
-              <TableCell>{patient.city || "No city"}</TableCell>
+              <TableCell>{patient.city || t("patients.info.noCity")}</TableCell>
               <TableCell>
                 <Button 
                   variant="outline" 
@@ -60,7 +63,7 @@ export function PatientTable({ patients, onViewFiles }: PatientTableProps) {
                   onClick={() => onViewFiles(patient)}
                 >
                   <FileText className="h-4 w-4" />
-                  Manage Files
+                  {t("patients.buttons.manageFiles")}
                 </Button>
               </TableCell>
             </TableRow>
@@ -70,7 +73,7 @@ export function PatientTable({ patients, onViewFiles }: PatientTableProps) {
               <TableCell colSpan={6} className="text-center py-8">
                 <div className="flex flex-col items-center justify-center">
                   <FileText className="h-12 w-12 text-gray-400 mb-2" />
-                  <h3 className="text-lg font-medium">No patients found</h3>
+                  <h3 className="text-lg font-medium">{t("patients.noPatients.title")}</h3>
                 </div>
               </TableCell>
             </TableRow>

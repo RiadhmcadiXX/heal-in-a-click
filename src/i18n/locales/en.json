@@ -1,0 +1,61 @@
+
+{
+  "app": {
+    "name": "Heal-in-a-Click"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "patients": "Patients",
+    "availability": "Availability",
+    "sharePatients": "Share Patients", 
+    "analytics": "Analytics",
+    "profile": "Profile",
+    "help": "Help",
+    "logout": "Logout",
+    "home": "Home",
+    "appointments": "Appointments"
+  },
+  "patients": {
+    "management": "Patients Management",
+    "search": "Search patients by name, email or phone...",
+    "views": {
+      "grid": "Grid View",
+      "table": "Table View"
+    },
+    "info": {
+      "name": "Patient Name",
+      "email": "Email",
+      "phone": "Phone",
+      "dob": "Date of Birth",
+      "city": "City",
+      "noEmail": "No email",
+      "noPhone": "No phone",
+      "noCity": "No city",
+      "notProvided": "Not provided",
+      "invalidDate": "Invalid date"
+    },
+    "buttons": {
+      "manageFiles": "Manage Files"
+    },
+    "noPatients": {
+      "title": "No patients found",
+      "message": "You don't have any patients yet",
+      "search": "Try adjusting your search query"
+    },
+    "files": {
+      "title": "Patient Files",
+      "tabs": {
+        "view": "View Files",
+        "upload": "Upload File"
+      },
+      "success": "File uploaded",
+      "successMessage": "The file has been uploaded successfully"
+    }
+  },
+  "language": {
+    "select": "Select Language",
+    "en": "English",
+    "fr": "French",
+    "ar": "Arabic"
+  }
+}

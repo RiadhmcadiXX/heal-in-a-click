@@ -4,32 +4,35 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { ChevronLeft, User, LogOut, HelpCircle, Share2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 export function Header() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { t } = useTranslation();
   
   const showBackButton = !["/", "/dashboard"].includes(location.pathname);
   
   const getPageTitle = () => {
     switch (location.pathname) {
       case "/":
-        return "Doctor Portal";
+        return t("navigation.home");
       case "/dashboard":
-        return "Doctor Dashboard";
+        return t("navigation.dashboard");
       case "/appointments":
-        return "My Appointments";
+        return t("navigation.appointments");
       case "/availability":
-        return "Manage Availability";
+        return t("navigation.availability");
       case "/profile":
-        return "My Profile";
+        return t("navigation.profile");
       case "/login":
         return "Login";
       case "/signup":
         return "Sign Up";
       default:
-        return "Heal-in-a-Click";
+        return t("app.name");
     }
   };
   
@@ -47,7 +50,7 @@ export function Header() {
             <ChevronLeft className="h-5 w-5" />
           </Button>
         ) : (
-          <div className="text-healthcare-primary font-bold text-lg">Heal-in-a-Click</div>
+          <div className="text-healthcare-primary font-bold text-lg">{t("app.name")}</div>
         )}
         
         <h1 className="text-lg font-semibold flex-1 text-center">
@@ -55,6 +58,7 @@ export function Header() {
         </h1>
         
         <div className="flex items-center space-x-2">
+          <LanguageSwitcher />
           <Link to="/help">
             <Button variant="ghost" size="icon">
               <HelpCircle className="h-5 w-5" />
@@ -84,7 +88,7 @@ export function Header() {
         <nav>
           <Link to="/share-patient" className="flex items-center space-x-2 hover:bg-gray-100 p-2 rounded">
             <Share2 className="h-4 w-4" />
-            <span>Share Patient</span>
+            <span>{t("navigation.sharePatients")}</span>
           </Link>
         </nav>
       )}

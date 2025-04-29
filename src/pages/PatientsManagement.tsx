@@ -12,6 +12,7 @@ import { PatientTable } from "@/components/PatientTable";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useTranslation } from "react-i18next";
 import { Loader2, Search, Grid, FileText, User, Phone, Mail, MapPin, Calendar, List } from "lucide-react";
 import { format } from "date-fns";
 
@@ -28,6 +29,7 @@ interface Patient {
 export default function PatientsManagement() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [filteredPatients, setFilteredPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -127,11 +129,11 @@ export default function PatientsManagement() {
   }
 
   function formatDate(dateString: string | null) {
-    if (!dateString) return "Not provided";
+    if (!dateString) return t("patients.info.notProvided");
     try {
       return format(new Date(dateString), 'MMM d, yyyy');
     } catch {
-      return "Invalid date";
+      return t("patients.info.invalidDate");
     }
   }
 
@@ -143,13 +145,13 @@ export default function PatientsManagement() {
   return (
     <MainLayout>
       <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-6">Patients Management</h1>
+        <h1 className="text-2xl font-bold mb-6">{t("patients.management")}</h1>
         
         <div className="mb-6">
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Search patients by name, email or phone..."
+              placeholder={t("patients.search")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -160,10 +162,10 @@ export default function PatientsManagement() {
         <Tabs value={viewType} onValueChange={(v) => setViewType(v as "grid" | "table")} className="mb-6">
           <TabsList className="grid w-full max-w-xs grid-cols-2">
             <TabsTrigger value="grid" className="flex items-center gap-2">
-              <Grid className="h-4 w-4" /> Grid View
+              <Grid className="h-4 w-4" /> {t("patients.views.grid")}
             </TabsTrigger>
             <TabsTrigger value="table" className="flex items-center gap-2">
-              <List className="h-4 w-4" /> Table View
+              <List className="h-4 w-4" /> {t("patients.views.table")}
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -189,17 +191,17 @@ export default function PatientsManagement() {
                       <div className="grid grid-cols-1 gap-2 text-sm">
                         <div className="flex items-center gap-2">
                           <Phone className="h-4 w-4 text-gray-500" />
-                          <span>{patient.phone || "No phone"}</span>
+                          <span>{patient.phone || t("patients.info.noPhone")}</span>
                         </div>
                         
                         <div className="flex items-center gap-2">
                           <Mail className="h-4 w-4 text-gray-500" />
-                          <span>{patient.email || "No email"}</span>
+                          <span>{patient.email || t("patients.info.noEmail")}</span>
                         </div>
                         
                         <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-gray-500" />
-                          <span>{patient.city || "No city"}</span>
+                          <span>{patient.city || t("patients.info.noCity")}</span>
                         </div>
                         
                         <div className="flex items-center gap-2">
@@ -214,7 +216,7 @@ export default function PatientsManagement() {
                         onClick={() => handleViewFiles(patient)}
                       >
                         <FileText className="h-4 w-4" />
-                        Manage Files
+                        {t("patients.buttons.manageFiles")}
                       </Button>
                     </div>
                   </Card>
@@ -232,9 +234,9 @@ export default function PatientsManagement() {
         ) : (
           <div className="text-center p-8 border rounded-lg">
             <FileText className="mx-auto h-12 w-12 text-gray-400 mb-2" />
-            <h3 className="text-lg font-medium">No patients found</h3>
+            <h3 className="text-lg font-medium">{t("patients.noPatients.title")}</h3>
             <p className="text-gray-500">
-              {searchQuery ? "Try adjusting your search query" : "You don't have any patients yet"}
+              {searchQuery ? t("patients.noPatients.search") : t("patients.noPatients.message")}
             </p>
           </div>
         )}
@@ -246,14 +248,14 @@ export default function PatientsManagement() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               <FileText className="h-5 w-5" />
-              Patient Files - {selectedPatient?.first_name} {selectedPatient?.last_name}
+              {t("patients.files.title")} - {selectedPatient?.first_name} {selectedPatient?.last_name}
             </DialogTitle>
           </DialogHeader>
           
           <Tabs defaultValue="files" className="w-full">
             <TabsList className="grid grid-cols-2 mb-4">
-              <TabsTrigger value="files">View Files</TabsTrigger>
-              <TabsTrigger value="upload">Upload File</TabsTrigger>
+              <TabsTrigger value="files">{t("patients.files.tabs.view")}</TabsTrigger>
+              <TabsTrigger value="upload">{t("patients.files.tabs.upload")}</TabsTrigger>
             </TabsList>
             
             <TabsContent value="files" className="mt-2">
@@ -269,8 +271,8 @@ export default function PatientsManagement() {
                   doctorId={doctorId}
                   onUploadComplete={() => {
                     toast({
-                      title: "File uploaded",
-                      description: "The file has been uploaded successfully"
+                      title: t("patients.files.success"),
+                      description: t("patients.files.successMessage")
                     });
                   }}
                 />

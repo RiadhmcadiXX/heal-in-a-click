@@ -1,0 +1,40 @@
+
+/* RTL specific styles */
+[dir="rtl"] .ltr-only {
+  display: none;
+}
+
+[dir="ltr"] .rtl-only {
+  display: none;
+}
+
+[dir="rtl"] .flex,
+[dir="rtl"] .flex-row {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .text-left {
+  text-align: right;
+}
+
+[dir="rtl"] .text-right {
+  text-align: left;
+}
+
+[dir="rtl"] .mr-1, [dir="rtl"] .mr-2, [dir="rtl"] .mr-3, [dir="rtl"] .mr-4, 
+[dir="rtl"] .mr-5, [dir="rtl"] .mr-6, [dir="rtl"] .mr-8, [dir="rtl"] .mr-10 {
+  margin-right: 0;
+  margin-left: 0.25rem;
+}
+
+[dir="rtl"] .ml-1, [dir="rtl"] .ml-2, [dir="rtl"] .ml-3, [dir="rtl"] .ml-4, 
+[dir="rtl"] .ml-5, [dir="rtl"] .ml-6, [dir="rtl"] .ml-8, [dir="rtl"] .ml-10 {
+  margin-left: 0;
+  margin-right: 0.25rem;
+}
+
+[dir="rtl"] .space-x-1 > *, [dir="rtl"] .space-x-2 > *, [dir="rtl"] .space-x-3 > *, 
+[dir="rtl"] .space-x-4 > *, [dir="rtl"] .space-x-5 > *, [dir="rtl"] .space-x-6 > * {
+  margin-right: var(--tw-space-x-reverse);
+  margin-left: calc(1rem * calc(1 - var(--tw-space-x-reverse)));
+}
