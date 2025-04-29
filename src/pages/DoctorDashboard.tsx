@@ -43,7 +43,7 @@ export default function DoctorDashboard() {
   const [date, setDate] = useState<Date>(new Date());
   const [monthAppointments, setMonthAppointments] = useState<any[]>([]);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
-  const [viewMode, setViewMode<"day" | "week">("day");
+  const [viewMode, setViewMode] = useState<"day" | "week">("day");
 
   const [showAddModal, setShowAddModal] = useState(false);
 
@@ -55,7 +55,7 @@ export default function DoctorDashboard() {
 
   const formattedWeeklyAppointments = useWeeklyCalendarAdapter(appointments);
 
-  const [daySlots, setDaySlots<{ time: string; status: "free" | "occupied" }[]>([]);
+  const [daySlots, setDaySlots] = useState<{ time: string; status: "free" | "occupied" }[]>([]);
 
   useEffect(() => {
     async function fetchDoctorData() {
