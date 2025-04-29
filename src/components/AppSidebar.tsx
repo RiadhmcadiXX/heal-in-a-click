@@ -8,7 +8,8 @@ import {
   User, 
   LogOut,
   HelpCircle,
-  Users
+  Users,
+  Menu
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -78,7 +79,9 @@ export function AppSidebar() {
           <div className="text-healthcare-primary font-bold text-xl">
             Heal-in-a-Click
           </div>
-          <SidebarTrigger />
+          <SidebarTrigger>
+            <Menu className="h-5 w-5" />
+          </SidebarTrigger>
         </div>
       </SidebarHeader>
       <SidebarContent>
