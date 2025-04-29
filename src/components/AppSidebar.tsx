@@ -8,11 +8,9 @@ import {
   User, 
   LogOut,
   HelpCircle,
-  Users,
-  Globe
+  Users
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import {
   Sidebar,
@@ -26,46 +24,44 @@ import {
   SidebarMenuItem,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { LanguageSwitcher } from "./LanguageSwitcher";
 
 export function AppSidebar() {
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const { t } = useTranslation();
 
   const navigationItems = [
     {
-      title: t("navigation.dashboard"),
+      title: "Dashboard",
       path: "/dashboard",
       icon: Home,
     },
     {
-      title: t("navigation.patients"),
+      title: "Patients",
       path: "/patients",
       icon: Users,
     },
     {
-      title: t("navigation.availability"),
+      title: "Availability",
       path: "/availability",
       icon: Calendar,
     },
     {
-      title: t("navigation.sharePatients"),
+      title: "Share Patients",
       path: "/share-patient",
       icon: Share2,
     },
     {
-      title: t("navigation.analytics"),
+      title: "Analytics",
       path: "/analytics",
       icon: BarChart,
     },
     {
-      title: t("navigation.profile"),
+      title: "Profile",
       path: "/profile",
       icon: User,
     },
     {
-      title: t("navigation.help"),
+      title: "Help",
       path: "/help",
       icon: HelpCircle,
     },
@@ -80,12 +76,9 @@ export function AppSidebar() {
       <SidebarHeader className="border-b py-4">
         <div className="px-4 flex items-center justify-between">
           <div className="text-healthcare-primary font-bold text-xl">
-            {t("app.name")}
+            Heal-in-a-Click
           </div>
-          <div className="flex items-center">
-            <LanguageSwitcher />
-            <SidebarTrigger />
-          </div>
+          <SidebarTrigger />
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -117,7 +110,7 @@ export function AppSidebar() {
             className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-sidebar-accent transition-colors"
           >
             <LogOut className="size-5" />
-            <span>{t("navigation.logout")}</span>
+            <span>Logout</span>
           </button>
         )}
       </SidebarFooter>

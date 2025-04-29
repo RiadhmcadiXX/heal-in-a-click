@@ -2,14 +2,12 @@
 import { Link } from "react-router-dom";
 import { Calendar, User } from "lucide-react";
 import { useLocation } from "react-router-dom";
-import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 
 export function Footer() {
   const location = useLocation();
   const { user } = useAuth();
-  const { t } = useTranslation();
   
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -44,7 +42,7 @@ export function Footer() {
               d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" 
             />
           </svg>
-          <span>{user ? t("navigation.dashboard") : t("navigation.home")}</span>
+          <span>{user ? "Dashboard" : "Home"}</span>
         </Link>
         
         <Link 
@@ -55,7 +53,7 @@ export function Footer() {
           )}
         >
           <Calendar className="h-6 w-6" />
-          <span>{user ? t("navigation.availability") : t("navigation.appointments")}</span>
+          <span>{user ? "Availability" : "Appointments"}</span>
         </Link>
         
         <Link 
@@ -66,7 +64,7 @@ export function Footer() {
           )}
         >
           <User className="h-6 w-6" />
-          <span>{t("navigation.profile")}</span>
+          <span>Profile</span>
         </Link>
       </div>
     </footer>
