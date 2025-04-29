@@ -29,7 +29,7 @@ export function Header() {
       case "/signup":
         return "Sign Up";
       default:
-        return "Heal-in-a-Click";
+        return "Tabibi";
     }
   };
   
