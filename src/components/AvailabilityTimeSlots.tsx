@@ -102,11 +102,11 @@ export function AvailabilityTimeSlots({
 
                 <div className="space-y-2">
                   <Label>Selected Time Ranges</Label>
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-3">
                     {selectedSlots.length > 0 ? (
                       selectedSlots.map((slot) => (
-                        <div key={slot} className="flex items-center gap-2">
-                          <span className="text-sm">{slot}</span>
+                        <div key={slot} className="flex items-center justify-between bg-gray-50 p-2 rounded-md">
+                          <span className="text-sm font-medium">{slot}</span>
                           <Button
                             variant="destructive"
                             size="sm"
@@ -117,7 +117,7 @@ export function AvailabilityTimeSlots({
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-muted-foreground">No time slots selected</p>
+                      <p className="text-sm text-muted-foreground col-span-2">No time slots selected</p>
                     )}
                   </div>
                 </div>

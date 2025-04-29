@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -105,7 +106,7 @@ export default function ManageAvailability() {
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Header />
 
-      <main className="flex-1 container max-w-5xl mx-auto px-6 pb-24 pt-4">
+      <main className="flex-1 container max-w-6xl mx-auto px-6 pb-24 pt-4">
         <div className="mb-6">
           <h1 className="text-2xl font-bold">Manage Your Availability</h1>
           <p className="text-gray-500">Select dates and times when you're available for appointments</p>
@@ -121,8 +122,8 @@ export default function ManageAvailability() {
           </div>
         )}
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <Card>
+        <div className="grid md:grid-cols-5 gap-6">
+          <Card className="md:col-span-3">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg">Select Date</CardTitle>
             </CardHeader>
@@ -137,16 +138,18 @@ export default function ManageAvailability() {
             </CardContent>
           </Card>
 
-          <AvailabilityTimeSlots
-            selectedDate={selectedDate}
-            selectedSlots={selectedSlots}
-            onSlotsChange={setSelectedSlots}
-            onSave={handleSaveAvailability}
-            isSubmitting={isSubmitting}
-            timeSlots={timeSlots}
-            onWeeklyScheduleSave={handleSaveWeeklySchedule}
-            appointmentDuration={appointmentDuration}
-          />
+          <div className="md:col-span-2">
+            <AvailabilityTimeSlots
+              selectedDate={selectedDate}
+              selectedSlots={selectedSlots}
+              onSlotsChange={setSelectedSlots}
+              onSave={handleSaveAvailability}
+              isSubmitting={isSubmitting}
+              timeSlots={timeSlots}
+              onWeeklyScheduleSave={handleSaveWeeklySchedule}
+              appointmentDuration={appointmentDuration}
+            />
+          </div>
         </div>
 
         <div className="mt-6">
