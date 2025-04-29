@@ -19,7 +19,7 @@ export function StatusPieChart({ data, loading }: StatusPieChartProps) {
     );
   }
 
-  if (!data?.length) {
+  if (!data || data.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-gray-500">No status data available</div>

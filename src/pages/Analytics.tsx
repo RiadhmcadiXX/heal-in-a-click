@@ -17,6 +17,7 @@ export default function Analytics() {
   const { user, loading: userLoading } = useAuth();
   const { toast } = useToast();
   const [doctor, setDoctor] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true); // Add explicit loading state
   
   // Fetch doctor data
   useEffect(() => {
@@ -24,6 +25,7 @@ export default function Analytics() {
       if (!user) return;
 
       try {
+        setIsLoading(true); // Set loading to true when fetching starts
         const { data, error } = await supabase
           .from('doctors')
           .select('*')
@@ -33,8 +35,10 @@ export default function Analytics() {
         if (error) throw error;
 
         setDoctor(data);
+        setIsLoading(false); // Set loading to false after fetching completes
       } catch (error: any) {
         console.error('Error fetching doctor data:', error);
+        setIsLoading(false); // Also set loading to false if there's an error
         toast({
           variant: "destructive",
           title: "Error",
@@ -57,8 +61,6 @@ export default function Analytics() {
     totalAppointments,
     avgMonthlyAppointments
   } = useDoctorAnalytics(doctor?.id);
-
-  const isLoading = userLoading || analyticsLoading || !doctor;
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -92,7 +94,7 @@ export default function Analytics() {
             <CardTitle className="text-sm font-medium text-gray-500">Total Appointments</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{isLoading ? "-" : totalAppointments}</div>
+            <div className="text-3xl font-bold">{isLoading || analyticsLoading ? "-" : totalAppointments}</div>
           </CardContent>
         </Card>
         
@@ -102,7 +104,7 @@ export default function Analytics() {
           </CardHeader>
           <CardContent className="flex items-center gap-2">
             <Users className="h-4 w-4 text-gray-500" />
-            <div className="text-3xl font-bold">{isLoading ? "-" : patientsCount}</div>
+            <div className="text-3xl font-bold">{isLoading || analyticsLoading ? "-" : patientsCount}</div>
           </CardContent>
         </Card>
         
@@ -112,7 +114,7 @@ export default function Analytics() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-green-600">
-              {isLoading ? "-" : statusDistribution.find(item => item.name === "completed")?.value || 0}
+              {isLoading || analyticsLoading ? "-" : statusDistribution.find(item => item.name.toLowerCase() === "completed")?.value || 0}
             </div>
           </CardContent>
         </Card>
@@ -122,7 +124,7 @@ export default function Analytics() {
             <CardTitle className="text-sm font-medium text-gray-500">Avg. Monthly</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-blue-600">{isLoading ? "-" : avgMonthlyAppointments}</div>
+            <div className="text-3xl font-bold text-blue-600">{isLoading || analyticsLoading ? "-" : avgMonthlyAppointments}</div>
           </CardContent>
         </Card>
       </div>
@@ -136,7 +138,7 @@ export default function Analytics() {
             </CardTitle>
           </CardHeader>
           <CardContent className="h-80">
-            {isLoading ? (
+            {isLoading || analyticsLoading ? (
               <div className="h-full flex items-center justify-center">
                 <LoadingAnimation 
                   animationUrl="https://lmlgqzzhbiisgmysaoww.supabase.co/storage/v1/object/public/images//animation.json"
@@ -145,7 +147,7 @@ export default function Analytics() {
                 />
               </div>
             ) : (
-              <AppointmentBarChart data={appointmentsData} />
+              <AppointmentBarChart data={appointmentsData || []} />
             )}
           </CardContent>
         </Card>
@@ -158,7 +160,7 @@ export default function Analytics() {
             </CardTitle>
           </CardHeader>
           <CardContent className="h-80">
-            {isLoading ? (
+            {isLoading || analyticsLoading ? (
               <div className="h-full flex items-center justify-center">
                 <LoadingAnimation 
                   animationUrl="https://lmlgqzzhbiisgmysaoww.supabase.co/storage/v1/object/public/images//animation.json"
@@ -167,7 +169,7 @@ export default function Analytics() {
                 />
               </div>
             ) : (
-              <StatusPieChart data={statusDistribution} />
+              <StatusPieChart data={statusDistribution || []} />
             )}
           </CardContent>
         </Card>
