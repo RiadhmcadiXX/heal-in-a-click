@@ -8,10 +8,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PatientFilesList } from "@/components/PatientFilesList";
 import { PatientFileUpload } from "@/components/PatientFileUpload";
+import { PatientTable } from "@/components/PatientTable";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Search, Filter, FileText, User, Phone, Mail, MapPin, Calendar } from "lucide-react";
+import { Loader2, Search, Grid, FileText, User, Phone, Mail, MapPin, Calendar, List } from "lucide-react";
 import { format } from "date-fns";
 
 interface Patient {
@@ -34,6 +35,7 @@ export default function PatientsManagement() {
   const [doctorId, setDoctorId] = useState<string | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [showPatientFiles, setShowPatientFiles] = useState(false);
+  const [viewType, setViewType] = useState<"grid" | "table">("grid");
 
   useEffect(() => {
     if (user) {
@@ -154,57 +156,79 @@ export default function PatientsManagement() {
             />
           </div>
         </div>
+        
+        <Tabs value={viewType} onValueChange={(v) => setViewType(v as "grid" | "table")} className="mb-6">
+          <TabsList className="grid w-full max-w-xs grid-cols-2">
+            <TabsTrigger value="grid" className="flex items-center gap-2">
+              <Grid className="h-4 w-4" /> Grid View
+            </TabsTrigger>
+            <TabsTrigger value="table" className="flex items-center gap-2">
+              <List className="h-4 w-4" /> Table View
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
         {loading ? (
           <div className="flex items-center justify-center p-8">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : filteredPatients.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredPatients.map((patient) => (
-              <Card key={patient.id} className="p-4 hover:shadow-md transition-shadow">
-                <div className="flex flex-col space-y-4">
-                  <div className="flex items-center gap-3">
-                    <User className="h-5 w-5 text-primary" />
-                    <div>
-                      <div className="font-medium">{patient.first_name} {patient.last_name}</div>
+          <>
+            {viewType === "grid" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredPatients.map((patient) => (
+                  <Card key={patient.id} className="p-4 hover:shadow-md transition-shadow">
+                    <div className="flex flex-col space-y-4">
+                      <div className="flex items-center gap-3">
+                        <User className="h-5 w-5 text-primary" />
+                        <div>
+                          <div className="font-medium">{patient.first_name} {patient.last_name}</div>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 gap-2 text-sm">
+                        <div className="flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-gray-500" />
+                          <span>{patient.phone || "No phone"}</span>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-gray-500" />
+                          <span>{patient.email || "No email"}</span>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-gray-500" />
+                          <span>{patient.city || "No city"}</span>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-gray-500" />
+                          <span>{formatDate(patient.date_of_birth)}</span>
+                        </div>
+                      </div>
+                      
+                      <Button 
+                        variant="outline" 
+                        className="w-full flex items-center justify-center gap-2"
+                        onClick={() => handleViewFiles(patient)}
+                      >
+                        <FileText className="h-4 w-4" />
+                        Manage Files
+                      </Button>
                     </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 gap-2 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-gray-500" />
-                      <span>{patient.phone || "No phone"}</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-gray-500" />
-                      <span>{patient.email || "No email"}</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-gray-500" />
-                      <span>{patient.city || "No city"}</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-gray-500" />
-                      <span>{formatDate(patient.date_of_birth)}</span>
-                    </div>
-                  </div>
-                  
-                  <Button 
-                    variant="outline" 
-                    className="w-full flex items-center justify-center gap-2"
-                    onClick={() => handleViewFiles(patient)}
-                  >
-                    <FileText className="h-4 w-4" />
-                    Manage Files
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+            
+            {viewType === "table" && (
+              <PatientTable 
+                patients={filteredPatients}
+                onViewFiles={handleViewFiles}
+              />
+            )}
+          </>
         ) : (
           <div className="text-center p-8 border rounded-lg">
             <FileText className="mx-auto h-12 w-12 text-gray-400 mb-2" />
