@@ -11,6 +11,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SharedPatient } from '@/types';
 import { usePatientSharing } from '@/hooks/usePatientSharing';
+import { LoadingAnimation } from '@/components/LoadingAnimation';
 
 export default function SharedPatientsTable() {
   const { getSharedPatients, loading } = usePatientSharing();
@@ -26,7 +27,15 @@ export default function SharedPatientsTable() {
   }, []);
 
   if (loading) {
-    return <div className="flex justify-center p-4">Loading shared patients...</div>;
+    return (
+      <div className="flex justify-center items-center p-8">
+        <LoadingAnimation
+          animationUrl="https://lmlgqzzhbiisgmysaoww.supabase.co/storage/v1/object/public/images//animation.json"
+          width={150}
+          height={150}
+        />
+      </div>
+    );
   }
 
   if (sharedPatients.length === 0) {

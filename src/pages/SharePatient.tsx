@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { usePatientSharing } from '@/hooks/usePatientSharing';
@@ -8,6 +9,7 @@ import PatientSelector from '@/components/shared-patients/PatientSelector';
 import DoctorSearch from '@/components/shared-patients/DoctorSearch';
 import { PatientVisit } from '@/types';
 import { MainLayout } from "@/layouts/MainLayout";
+import { LoadingAnimation } from '@/components/LoadingAnimation';
 
 export default function SharePatient() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -80,7 +82,18 @@ export default function SharePatient() {
   };
 
   if (loading) {
-    return <div className="flex justify-center p-4">Loading...</div>;
+    return (
+      <MainLayout>
+        <div className="flex justify-center items-center h-[70vh]">
+          <LoadingAnimation
+            animationUrl="https://lmlgqzzhbiisgmysaoww.supabase.co/storage/v1/object/public/images//animation.json"
+            width={250}
+            height={250}
+            className="mx-auto"
+          />
+        </div>
+      </MainLayout>
+    );
   }
 
   return (
