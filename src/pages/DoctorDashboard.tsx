@@ -1,39 +1,24 @@
+
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, BarChart, Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { MonthlyCalendar } from "@/components/MonthlyCalendar";
-import { AppointmentsTable } from "@/components/AppointmentsTable";
 import { useDoctorAppointments } from "@/hooks/useDoctorAppointments";
-import { DayAvailabilitySidebar } from "@/components/DayAvailabilitySidebar";
-import { AddAppointmentModal } from "@/components/AddAppointmentModal";
-import { WeeklyCalendarView } from "@/components/WeeklyCalendarView";
 import { useWeeklyCalendarAdapter } from "@/hooks/useWeeklyCalendarAdapter";
-import { PendingAppointmentsList } from "@/components/PendingAppointmentsList";
 import { MainLayout } from "@/layouts/MainLayout";
+import { AddAppointmentModal } from "@/components/AddAppointmentModal";
+import { ViewModeToggle } from "@/components/dashboard/ViewModeToggle";
+import { DoctorHeader } from "@/components/dashboard/DoctorHeader";
+import { DailyViewDashboard } from "@/components/dashboard/DailyViewDashboard";
+import { WeeklyViewDashboard } from "@/components/dashboard/WeeklyViewDashboard";
+import { AppointmentsDisplay } from "@/components/dashboard/AppointmentsDisplay";
 
 const WORKING_HOURS = [
-  "09:00:00",
-  "10:00:00",
-  "11:00:00",
-  "12:00:00",
-  "13:00:00",
-  "14:00:00",
-  "15:00:00",
-  "16:00:00",
-  "17:00:00",
+  "09:00:00", "10:00:00", "11:00:00", "12:00:00", "13:00:00",
+  "14:00:00", "15:00:00", "16:00:00", "17:00:00",
 ];
-
-function formatHourLabel(t: string) {
-  const [h, m] = t.split(":");
-  const date = new Date(2000, 1, 1, Number(h), Number(m), 0);
-  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
 
 export default function DoctorDashboard() {
   const navigate = useNavigate();
@@ -44,8 +29,8 @@ export default function DoctorDashboard() {
   const [monthAppointments, setMonthAppointments] = useState<any[]>([]);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [viewMode, setViewMode] = useState<"day" | "week">("day");
-
   const [showAddModal, setShowAddModal] = useState(false);
+  const [daySlots, setDaySlots] = useState<{ time: string; status: "free" | "occupied" }[]>([]);
 
   const { appointments, loading: loadingData, refreshAppointments } = useDoctorAppointments(
     doctor?.id,
@@ -54,8 +39,6 @@ export default function DoctorDashboard() {
   );
 
   const formattedWeeklyAppointments = useWeeklyCalendarAdapter(appointments);
-
-  const [daySlots, setDaySlots] = useState<{ time: string; status: "free" | "occupied" }[]>([]);
 
   useEffect(() => {
     async function fetchDoctorData() {
@@ -158,7 +141,7 @@ export default function DoctorDashboard() {
       slots = slotsToUse
         .sort()
         .map((time) => ({
-          time,
+          time: time as string,
           status: occupiedSet.has(time as string) ? "occupied" : "free",
         }));
       setDaySlots(slots);
@@ -189,132 +172,38 @@ export default function DoctorDashboard() {
 
   return (
     <MainLayout>
-      {doctor && (
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">
-            Welcome, Dr. {doctor.first_name} {doctor.last_name}
-          </h1>
-          <p className="text-gray-500">{doctor.specialty}</p>
-        </div>
+      <DoctorHeader doctor={doctor} selectedDate={date} />
+      
+      <div className="flex justify-end mb-4">
+        <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
+      </div>
+
+      {viewMode === "day" ? (
+        <DailyViewDashboard
+          slots={daySlots}
+          onAddAppointmentClick={() => setShowAddModal(true)}
+          date={date}
+          onDateSelect={(newDate) => newDate && setDate(newDate)}
+          hasAppointmentOnDate={hasAppointmentOnDate}
+          pendingAppointments={pendingAppointments}
+          onStatusChange={refreshAppointments}
+        />
+      ) : (
+        <WeeklyViewDashboard
+          appointments={formattedWeeklyAppointments}
+          onAppointmentClick={(apt) => setSelectedAppointment(apt.originalData)}
+          selectedDate={date}
+          onDateChange={setDate}
+        />
       )}
 
-      <div className="flex justify-end mb-4">
-        <div className="flex rounded-md">
-          <Button
-            variant={viewMode === "day" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setViewMode("day")}
-            className="rounded-l-md rounded-r-none"
-          >
-            Day View
-          </Button>
-          <Button
-            variant={viewMode === "week" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setViewMode("week")}
-            className="rounded-r-md rounded-l-none"
-          >
-            Week View
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex gap-6 items-start">
-        {viewMode === "day" ? (
-          <>
-            <div className="flex flex-col md:flex-row gap-6 items-start flex-1">
-              <DayAvailabilitySidebar
-                slots={daySlots.map((s) => ({
-                  time: formatHourLabel(s.time),
-                  status: s.status,
-                }))}
-                onAddAppointmentClick={() => setShowAddModal(true)}
-                onSlotClick={undefined}
-              />
-
-              <div className="flex-1 w-full md:max-w-xl">
-                <MonthlyCalendar
-                  date={date}
-                  onDateSelect={(newDate) => newDate && setDate(newDate)}
-                  hasAppointmentOnDate={hasAppointmentOnDate}
-                />
-              </div>
-            </div>
-            <div className="w-80 sticky top-4">
-              <PendingAppointmentsList 
-                appointments={pendingAppointments}
-                onStatusChange={refreshAppointments}
-              />
-            </div>
-          </>
-        ) : (
-          <div className="w-full overflow-x-auto">
-            <Card className="p-4 w-full">
-              <WeeklyCalendarView
-                appointments={formattedWeeklyAppointments}
-                onAppointmentClick={(apt) => {
-                  setSelectedAppointment(apt.originalData);
-                }}
-                selectedDate={date}
-                onDateChange={setDate}
-              />
-            </Card>
-          </div>
-        )}
-      </div>
-
-      <div className="mt-8">
-        <Card>
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">
-                Appointments for {format(date, 'MMMM d, yyyy')}
-              </h2>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate('/analytics')}
-                  className="flex items-center gap-2"
-                >
-                  <BarChart className="h-4 w-4" />
-                  <span>View Analytics</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate('/availability')}
-                  className="flex items-center gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Manage Availability</span>
-                </Button>
-              </div>
-            </div>
-
-            {loadingData ? (
-              <div className="text-center py-8">Loading appointments...</div>
-            ) : selectedDayAppointments.length > 0 ? (
-              <AppointmentsTable
-                appointments={selectedDayAppointments}
-                onAppointmentClick={setSelectedAppointment}
-                selectedAppointmentId={selectedAppointment?.id}
-                refreshAppointments={refreshAppointments}
-              />
-            ) : (
-              <div className="text-center py-8 border rounded-md p-6">
-                <p className="text-gray-500">No appointments scheduled for this day.</p>
-                <Button
-                  className="mt-4 bg-healthcare-primary hover:bg-healthcare-primary/90"
-                  onClick={() => navigate("/availability")}
-                >
-                  Add Availability
-                </Button>
-              </div>
-            )}
-          </div>
-        </Card>
-      </div>
+      <AppointmentsDisplay 
+        loading={loadingData}
+        appointments={selectedDayAppointments}
+        onAppointmentClick={setSelectedAppointment}
+        selectedAppointmentId={selectedAppointment?.id}
+        refreshAppointments={refreshAppointments}
+      />
 
       {doctor && (
         <AddAppointmentModal
